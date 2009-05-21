@@ -455,7 +455,7 @@ module My
         if (i >= STARTS) && (i <= ENDS) then
           fn = My.diary_entry_filename(date,i,value)
           File.open(fn,'w'){|fh|} # touch
-          start_date = Date.new(year,month,day)
+          start_date = Date.new(year.to_i, month.to_i, day.to_i)
           My.populate_hook( start_date..start_date )
         else
           raise "Oh, no! WHY?? Why me!? Oh, the humanity!!!"
