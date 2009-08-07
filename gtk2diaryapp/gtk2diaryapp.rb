@@ -43,6 +43,10 @@ module My
   def self.populate_hook=(value)
     @@populate_hook = value
   end
+  def self.lock(v)
+    @@populate_hook.lock(v)
+  end
+
 
   @@add_label_hook = nil
   def self.add_label_hook(label)
@@ -137,7 +141,7 @@ module My
       self.use_underline=false
       @value = nil
       self.signal_connect('clicked'){
-        yield(value) if value
+        yield(@value) if @value
         false
       }
     end
@@ -150,6 +154,7 @@ module My
     def initialize(text, pack)
       super(text)
       My.common(self, pack, Configuration::FONT[:small])
+      signal_connect('toggled'){ yield(self) } if block_given?
     end
   end
 
@@ -238,6 +243,11 @@ module My
       @previous = [self.diary_entry_filename, @label.text, @sort_order.value]
       pack.pack_start(self, false, false, Configuration::GUI[:padding])
     end
+
+    def can_focus=(v)
+      @label.can_focus = v
+      @sort_order.can_focus = v
+    end
   end
 
   class DiaryEntry < Gtk::VBox
@@ -259,22 +269,29 @@ module My
       super()
       @title_box = TitleBox.new(md,self)
       @buffer = Gtk::TextBuffer.new
-      delete = Button.new('Delete', @title_box){
+      @delete = Button.new('Delete', @title_box){
         @buffer.text = ''
         pack.remove(self)
         self.destroy
       }
-      delete.value = true
+      @delete.value = true
       File.open(filename,'r'){|fh| @buffer.text = fh.read}
       @md5sum = Digest::MD5.hexdigest(@buffer.text)
-      text_view = Gtk::TextView.new(@buffer)
-      text_view.wrap_mode = Gtk::TextTag::WRAP_WORD
-      text_view.set_border_window_size(Gtk::TextView::WINDOW_TOP, 10)
-      self.pack_start( text_view, false, false, Configuration::GUI[:padding] )
+      @text_view = Gtk::TextView.new(@buffer)
+      @text_view.wrap_mode = Gtk::TextTag::WRAP_WORD
+      @text_view.set_border_window_size(Gtk::TextView::WINDOW_TOP, 10)
+      self.pack_start( @text_view, false, false, Configuration::GUI[:padding] )
       pack.pack_start( self, false, false, Configuration::GUI[:padding] )
       self.signal_connect('destroy'){ self.update }
 
-      text_view.grab_focus if @buffer.text.length == 0
+      @text_view.grab_focus if @buffer.text.length == 0 && @text_view.can_focus?
+    end
+
+    def lock(v)
+      v = !v
+      @text_view.can_focus = v
+      @delete.value = v
+      @title_box.can_focus = v
     end
   end
 
@@ -385,12 +402,20 @@ module My
   class ResultsPane < Gtk::VBox
     def initialize
       super
+      @lock = false
     end
 
     def clear
       while child = self.children.last do
         self.remove(child)
         child.destroy
+      end
+    end
+
+    def lock(v)
+      @lock = v
+      self.children.each do |child|
+        child.lock(@lock)
       end
     end
 
@@ -420,6 +445,7 @@ module My
       files.sort{|a,b| sign*(a[0]<=>b[0])}.each {|fn,md|
         DiaryEntry.new(fn, md, self)
       }
+      self.lock(@lock) if @lock
       self.show_all
     end
   end
@@ -427,7 +453,10 @@ module My
   class ControlPane < Gtk::VBox
     def initialize
       super()
-      My.invert_sort_hook = invert_sort = CheckButton.new('Invert Sort', self)
+      hbox = Gtk::HBox.new
+      My.invert_sort_hook = invert_sort = CheckButton.new('Invert Sort', hbox)
+      CheckButton.new('Lock', hbox){|c| My.lock(c.active?) }
+      self.pack_start(hbox, false, false, Configuration::GUI[:padding] )
       invert_sort.active = true
       My.calendar_hook = calendar = Calendar.new
       hbox = Gtk::HBox.new
