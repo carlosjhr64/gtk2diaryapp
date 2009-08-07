@@ -1,18 +1,26 @@
 #!/usr/bin/env ruby
 require 'rubygems'
-gem 'gtk2applib', '~> 1.0.1'
+gem 'gtk2applib', '~> 2.0.2'
 require 'gtk2applib/gtk2_app'
 
+# The About info
 about = {
-        'authors'       => ['carlosjhr64@gmail.com'],
+	:authors	=> ['carlosjhr64@gmail.com'],
         'comments'      => 'Ruby-Gtk2 Diary',
         'website'       => 'http://ruby-gnome-apps.blogspot.com/search/label/Diary',
         'website-label' => 'Ruby-Gnome Diary',
-        'license'       => 'GPL',
-        'copyright'     => '2009-Apr-03',
-}
+	:license	=> 'GPL',
+	:copyright	=> '2009-Aug-6',
+	}
 
-Gtk2App.instance(__FILE__, 'Ruby-Gnome Diary', about, true, true) do |window|
+# Miscellaneous info on this application/file
+application = {
+	:name		=> 'Ruby-Gnome Diary',
+	:tooltip	=> 'Diary',
+	:FILE		=> __FILE__,
+	}
+
+Gtk2App.instance(application, about) do |window|
   UserSpace.mkdir('/diary')
   require 'gtk2diaryapp/gtk2diaryapp'
   Gtk2DiaryApp.new(window)

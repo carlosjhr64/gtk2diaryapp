@@ -87,7 +87,11 @@ module My
       ['All Time', 'Last 365 Days', 'Last 90 Days', 'Last 30 Days', 'Year', 'Month', 'Day'].each {|item|
         self.append_text("Search #{item}")
       }
-      self.active = 3
+      # Yes, a global, bite me!  Alright, adding some safeties...
+      $active_time_frame = ($active_time_frame.nil?)? Configuration::ACTIVE_TIME_FRAME: $active_time_frame.to_i
+      $active_time_frame = 0 if $active_time_frame < 0 || $active_time_frame > 6
+      self.active = $active_time_frame
+      self.signal_connect('changed'){ $active_time_frame = self.active }
     end
 
     def value
