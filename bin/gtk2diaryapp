@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 require 'rubygems'
-gem 'gtk2applib', '~> 2.0.2'
+gem 'gtk2applib', '~> 2.1.0'
 require 'gtk2applib/gtk2_app'
 
 # The About info
