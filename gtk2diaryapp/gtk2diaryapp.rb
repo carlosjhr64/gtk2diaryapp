@@ -9,7 +9,7 @@ class Integer
   end
 end
 
-module My
+module Gtk2Diary
   TXT = 'txt'
   DIARY_TXT_FILE = Regexp.new('/(\d\d\d\d)/(\d\d)/(\d\d)/(\d\d\d).(\w+)\.' + TXT + '$')
   YEAR, MONTH, DAY, SORT, LABEL = 1, 2, 3, 4, 5
@@ -87,7 +87,7 @@ module My
   class TimeFrame < Gtk::ComboBox
     def initialize(pack)
       super()
-      My.common(self,pack)
+      Gtk2Diary.common(self,pack)
       ['All Time', 'Last 365 Days', 'Last 90 Days', 'Last 30 Days', 'Year', 'Month', 'Day'].each {|item|
         self.append_text("Search #{item}")
       }
@@ -99,7 +99,7 @@ module My
     end
 
     def value
-      date = My.calendar_hook.date
+      date = Gtk2Diary.calendar_hook.date
       ret = nil
       case self.active
         when 1
@@ -137,7 +137,7 @@ module My
     end
     def initialize(label, pack)
       super(label)
-      My.common(self, pack)
+      Gtk2Diary.common(self, pack)
       self.use_underline=false
       @value = nil
       self.signal_connect('clicked'){
@@ -153,7 +153,7 @@ module My
     end
     def initialize(text, pack)
       super(text)
-      My.common(self, pack, Configuration::FONT[:small])
+      Gtk2Diary.common(self, pack, Configuration::FONT[:small])
       signal_connect('toggled'){ yield(self) } if block_given?
     end
   end
@@ -161,7 +161,7 @@ module My
   class Label < Gtk::Label
     def initialize(label,pack)
       super(label)
-      My.common(self,pack)
+      Gtk2Diary.common(self,pack)
     end
   end
 
@@ -169,7 +169,7 @@ module My
     def initialize(label,pack)
       super()
       self.text = label
-      My.common(self,pack)
+      Gtk2Diary.common(self,pack)
       self.signal_connect('focus-out-event'){
         yield
         false
@@ -183,7 +183,7 @@ module My
     end
     def initialize(pack)
       super(STARTS,ENDS,1)
-      My.common(self, pack, Configuration::FONT[:small])
+      Gtk2Diary.common(self, pack, Configuration::FONT[:small])
       self.signal_connect('focus-out-event'){
         yield
         false
@@ -193,7 +193,7 @@ module My
 
   class TitleBox < Gtk::HBox
     def diary_entry_filename
-      return My.diary_entry_filename( @date.label, @sort_order.value, @label.text )
+      return Gtk2Diary.diary_entry_filename( @date.label, @sort_order.value, @label.text )
     end
 
     def initialize(md,pack)
@@ -212,16 +212,16 @@ module My
             if File.rename(@previous[0], filename) then
               @previous[0] = filename
               @previous[1] = @label.text
-              My.add_label_hook(@label.text)
+              Gtk2Diary.add_label_hook(@label.text)
             end
           end
         end
       }
       @date = Button.new(md[YEAR]+'/'+md[MONTH]+'/'+md[DAY], self){|value|
-        My.populate_active = false
-        My.calendar_hook.select_month(value[1],value[0])
-        My.populate_active = true
-        My.calendar_hook.select_day(value[2])
+        Gtk2Diary.populate_active = false
+        Gtk2Diary.calendar_hook.select_month(value[1],value[0])
+        Gtk2Diary.populate_active = true
+        Gtk2Diary.calendar_hook.select_day(value[2])
       }
       @date.value = [md[YEAR].to_i, md[MONTH].to_i, md[DAY].to_i]
       @sort_order = IntegerSpinButton.new(self){
@@ -302,7 +302,7 @@ module My
       keywords.width_request = Configuration::KEYWORDS_ENTRY_WIDTH
       search = Button.new('Search', self){|value|
         date_range = time_frame.value
-        My.populate_hook(date_range, nil, nil, keywords.text)
+        Gtk2Diary.populate_hook(date_range, nil, nil, keywords.text)
       }
       search.value = true
       pack.pack_start( self, false, false, Configuration::GUI[:padding] )
@@ -320,7 +320,7 @@ module My
       end
       search_label = Button.new(label, @hbox){|value|
         date_range = @time_frame.value
-        My.populate_hook(date_range, nil, value)
+        Gtk2Diary.populate_hook(date_range, nil, value)
       }
       search_label.value = label
     end
@@ -376,24 +376,24 @@ module My
       super()
       mark_days
       self.signal_connect('month-changed'){
-        if My.populate_active then
-          My.populate_active = false
+        if Gtk2Diary.populate_active then
+          Gtk2Diary.populate_active = false
           marked = mark_days
           start_date = Date.new(self.year,self.month+1,1)
           end_date = start_date + DAYS_IN_MONTH[self.month]
           date_range = start_date..end_date
-          My.populate_hook(date_range, STARTS.to_s, Configuration::DEFAULT_LABEL)
+          Gtk2Diary.populate_hook(date_range, STARTS.to_s, Configuration::DEFAULT_LABEL)
           # if marked, we'll be going to day-selected next, so need to flag it as nil to skip it.
-          My.populate_active = (marked)? nil: true
+          Gtk2Diary.populate_active = (marked)? nil: true
         end
       }
       self.signal_connect('day-selected'){
-        if My.populate_active then
+        if Gtk2Diary.populate_active then
           start_date = Date.new(self.year, self.month+1,  self.day)
-          My.populate_hook( start_date..start_date )
-        elsif My.populate_active.nil?
+          Gtk2Diary.populate_hook( start_date..start_date )
+        elsif Gtk2Diary.populate_active.nil?
           # skipped, but restoring to true
-          My.populate_active = true
+          Gtk2Diary.populate_active = true
         end
       }
     end
@@ -441,7 +441,7 @@ module My
           end
         end
       }
-      sign = (My.invert_sort_hook)? -1: 1
+      sign = (Gtk2Diary.invert_sort_hook)? -1: 1
       files.sort{|a,b| sign*(a[0]<=>b[0])}.each {|fn,md|
         DiaryEntry.new(fn, md, self)
       }
@@ -454,11 +454,11 @@ module My
     def initialize
       super()
       hbox = Gtk::HBox.new
-      My.invert_sort_hook = invert_sort = CheckButton.new('Invert Sort', hbox)
-      CheckButton.new('Lock', hbox){|c| My.lock(c.active?) }
+      Gtk2Diary.invert_sort_hook = invert_sort = CheckButton.new('Invert Sort', hbox)
+      CheckButton.new('Lock', hbox){|c| Gtk2Diary.lock(c.active?) }
       self.pack_start(hbox, false, false, Configuration::GUI[:padding] )
       invert_sort.active = true
-      My.calendar_hook = calendar = Calendar.new
+      Gtk2Diary.calendar_hook = calendar = Calendar.new
       hbox = Gtk::HBox.new
       new_entry = Button.new('New Entry', hbox){|value|
         date = calendar.date
@@ -479,33 +479,33 @@ module My
         if i > ENDS then
           i -= 1
           # Find highest non-collision
-          fn = My.diary_entry_filename(date,i,value)
+          fn = Gtk2Diary.diary_entry_filename(date,i,value)
           while File.exist?(fn) && (i >= STARTS) do
             i -= 1
-            fn = My.diary_entry_filename(date,i,value)
+            fn = Gtk2Diary.diary_entry_filename(date,i,value)
           end
         end
         if (i >= STARTS) && (i <= ENDS) then
-          fn = My.diary_entry_filename(date,i,value)
+          fn = Gtk2Diary.diary_entry_filename(date,i,value)
           File.open(fn,'w'){|fh|} # touch
           start_date = Date.new(year.to_i, month.to_i, day.to_i)
-          My.populate_hook( start_date..start_date )
+          Gtk2Diary.populate_hook( start_date..start_date )
         else
           raise "Oh, no! WHY?? Why me!? Oh, the humanity!!!"
         end
         Thread.new{
           sleep(Configuration::SHORT_SLEEP)
           # 100000, to be squash to actual limit
-          My.vscrollbar_hook.value = (My.inverted_sort_hook)? 0: 100000
+          Gtk2Diary.vscrollbar_hook.value = (Gtk2Diary.inverted_sort_hook)? 0: 100000
         }
       }
       new_entry.value = Configuration::DEFAULT_LABEL
 
       today = Button.new('Today', hbox){|value|
         date_today = Date.today
-        My.populate_active = false
+        Gtk2Diary.populate_active = false
         calendar.select_month(date_today.month,date_today.year)
-        My.populate_active = true
+        Gtk2Diary.populate_active = true
         calendar.select_day(date_today.day)
       }
       today.value = true
@@ -514,33 +514,33 @@ module My
       self.pack_start( calendar, false, false, Configuration::GUI[:padding] )
       time_frame = TimeFrame.new(self)
       keyword_search_form = KeywordSearchForm.new( self, time_frame )
-      My.add_label_hook = LabelsCloud.new( self, time_frame )
+      Gtk2Diary.add_label_hook = LabelsCloud.new( self, time_frame )
     end
   end
 end
 
-class Gtk2DiaryApp
-  def initialize(window)
-    # Create paned windows
-    hpaned = Gtk::HPaned.new
-    hpaned.position = Configuration::PANE_POSITION
+  class Gtk2DiaryApp
+    def initialize(window)
+      # Create paned windows
+      hpaned = Gtk::HPaned.new
+      hpaned.position = Configuration::PANE_POSITION
+  
+      # Control pane
+      control_pane = Gtk2Diary::ControlPane.new
+      sw_control = Gtk::ScrolledWindow.new
+      sw_control.add_with_viewport(control_pane)
+      hpaned.add(sw_control)
 
-    # Control pane
-    control_pane = My::ControlPane.new
-    sw_control = Gtk::ScrolledWindow.new
-    sw_control.add_with_viewport(control_pane)
-    hpaned.add(sw_control)
-
-    # Results pane
-    results_pane = My::ResultsPane.new
-    My.populate_hook = results_pane
-    today = Date.today
-    My.populate_hook( today..today )
-    sw_results = Gtk::ScrolledWindow.new
-    My.vscrollbar_hook = sw_results.vscrollbar
-    sw_results.add_with_viewport(results_pane)
-    hpaned.add(sw_results)
-
-    window.add(hpaned)
+      # Results pane
+      results_pane = Gtk2Diary::ResultsPane.new
+      Gtk2Diary.populate_hook = results_pane
+      today = Date.today
+      Gtk2Diary.populate_hook( today..today )
+      sw_results = Gtk::ScrolledWindow.new
+      Gtk2Diary.vscrollbar_hook = sw_results.vscrollbar
+      sw_results.add_with_viewport(results_pane)
+      hpaned.add(sw_results)
+  
+      window.add(hpaned)
+    end
   end
-end
