@@ -38,7 +38,7 @@ EOT
 
   s.default_executable = 'gtk2diaryapp'
 
-  s.add_dependency('gtk2applib', '~> 1.0.1')
+  s.add_dependency('gtk2applib', '~> 2.0.2')
   s.requirements << 'ruby-gtk2'
 
   s.require_path = '.'
