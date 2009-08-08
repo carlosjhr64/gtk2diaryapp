@@ -15,6 +15,12 @@ Invert Sort
 Entries are shown in chronlogical/sort_id order and
 one can reverse this order.
 
+Lock
+Setting the lock will prevent entries from accidently being edited,
+by preventing "focus" on them.
+It's a good idea to set the lock if you're just reading/reviewing
+your entries.
+
 New Entry
 Pressing this button adds a new entry to the
 selected date on the calendar.
@@ -33,7 +39,6 @@ Search [All Time, ..., Year, Month, Day]
 The search time frame combo box allows one
 to limit the keywords or label search to
 a particular timeframe.
-Defaults to last thirty days.
 
 Keyword Search
 The Search button searches the text entries,

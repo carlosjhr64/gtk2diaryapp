@@ -368,7 +368,7 @@ module My
             marked = true if !marked
           end
         end
-      }
+      } if File.exist?(Configuration::DIARY_DIRECTORY+subdir)
       return marked
     end
 
