@@ -152,6 +152,7 @@ module Gtk2Diary
           end
         end
       }
+      @label.width_request = 100 # Configurable?
       @date = Gtk2App::Button.new(md[YEAR]+'/'+md[MONTH]+'/'+md[DAY], self){|value|
         Gtk2Diary.populate_active = false
         Gtk2Diary.calendar_hook.select_month(value[1],value[0])
@@ -192,7 +193,6 @@ module Gtk2Diary
       filename = @title_box.diary_entry_filename
       if @buffer.text.length > 0 then
         md5sum = Digest::MD5.hexdigest(@buffer.text)
-        # TODO currently no restore on bak files, maybe later? rcs???
         if !(md5sum == @md5sum) then
           File.rename(filename, filename+'.bak')
           File.open(filename,'w'){|fh| fh.puts @buffer.text}
@@ -206,17 +206,26 @@ module Gtk2Diary
       super()
       @title_box = TitleBox.new(md,self)
       @buffer = Gtk::TextBuffer.new
+
+      @revert = Gtk2App::Button.new('Restore', @title_box){|value|
+        filename = @title_box.diary_entry_filename
+        File.open(filename,'r'){|fh| @buffer.text = fh.read}
+      }
+      @revert.value = true
+
       @delete = Gtk2App::Button.new('Delete', @title_box){
         @buffer.text = ''
         pack.remove(self)
         self.destroy
       }
       @delete.value = true
+
       File.open(filename,'r'){|fh| @buffer.text = fh.read}
       @md5sum = Digest::MD5.hexdigest(@buffer.text)
       @text_view = Gtk::TextView.new(@buffer)
       @text_view.wrap_mode = Gtk::TextTag::WRAP_WORD
       @text_view.set_border_window_size(Gtk::TextView::WINDOW_TOP, 10)
+
       Gtk2App.common(@text_view, self)
       Gtk2App.common(self, pack)
       self.signal_connect('destroy'){ self.update }
@@ -228,6 +237,7 @@ module Gtk2Diary
       v = !v
       @text_view.can_focus = v
       @delete.value = v
+      @revert.value = v
       @title_box.can_focus = v
     end
   end
@@ -339,7 +349,7 @@ module Gtk2Diary
   class ResultsPane < Gtk::VBox
     def initialize
       super
-      @lock = false
+      @lock = Configuration::INITIAL_LOCK
     end
 
     def clear
@@ -393,7 +403,9 @@ module Gtk2Diary
       hbox = Gtk::HBox.new
       Gtk2Diary.invert_sort_hook = invert_sort =
 	Gtk2App::CheckButtonLabel.new('Invert Sort', hbox, true, Configuration::FONT[:small])
-      Gtk2App::CheckButtonLabel.new('Lock', hbox, false, Configuration::FONT[:small]){|c| Gtk2Diary.lock(c.active?) }
+      Gtk2App::CheckButtonLabel.new('Lock', hbox, Configuration::INITIAL_LOCK, Configuration::FONT[:small]){|c|
+	Gtk2Diary.lock(c.active?)
+      }
       Gtk2App.common(hbox,self)
       Gtk2Diary.calendar_hook = calendar = Calendar.new
       hbox = Gtk::HBox.new

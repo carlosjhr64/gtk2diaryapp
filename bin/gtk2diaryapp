@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 require 'rubygems'
-gem 'gtk2applib', '~> 2.1.0'
+gem 'gtk2applib', '~> 2.4.0'
 require 'gtk2applib/gtk2_app'
 
 # The About info
@@ -10,7 +10,7 @@ about = {
         'website'       => 'http://ruby-gnome-apps.blogspot.com/search/label/Diary',
         'website-label' => 'Ruby-Gnome Diary',
 	:license	=> 'GPL',
-	:copyright	=> '2009-Aug-6',
+	:copyright	=> '2009-Aug-28',
 	}
 
 # Miscellaneous info on this application/file
@@ -26,5 +26,14 @@ Gtk2App.instance(application, about) do |window|
   Gtk2DiaryApp.new(window)
 end
 
-require 'find'
-Find.find(Configuration::DIARY_DIRECTORY){|fn| File.unlink(fn) if fn=~/\.txt\.bak/ }
+if Configuration::DAYS_TO_HOLD_BAK then
+  require 'find'
+  now = Time.now.to_i
+  spd = 60*60*24
+  Find.find(Configuration::DIARY_DIRECTORY){|fn|
+    if fn=~/\.txt\.bak/ then
+      days_old = (now - File.mtime(fn).to_i)/spd
+      File.unlink(fn) if days_old > Configuration::DAYS_TO_HOLD_BAK
+    end
+  }
+end

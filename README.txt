@@ -59,16 +59,19 @@ the entries within a date.
 it is possible to saturate and the application will
 quit and complain bitterly if you do.
 
+Restore
+The Restore button restores the text back
+to it's last saved content.
+Saves happen automatically whenever the
+text widget is destroyed.
+
 Delete
 The Delete button deletes the entry.
 Actually, it moves the file to file.bak, so
 if you need to revert, go to
-	~/.gtk2diaryapp/diary/Year/Month/Day/
+	~/.gtk2diaryapp-1/diary/Year/Month/Day/
 and move
 	***.deleted_entry.txt.bak
 back to
 	***.deleted_entry.txt
-I'll be adding a revert option in the app menu for
-the next release (well, sometime soon, anyways).
-But keep the app running...
-The app cleans-up (deletes) all these *.bak files on exit.
+I may add a revert option in a future release.
