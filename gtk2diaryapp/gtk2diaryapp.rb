@@ -16,7 +16,7 @@ module Gtk2Diary
 
   STARTS = 100
   ENDS	= 999
-  SPIN_BUTTON_OPTIONS = {:min=>STARTS,:mas=>ENDS,:step=>1}.freeze
+  SPIN_BUTTON_OPTIONS = {:min=>STARTS,:max=>ENDS,:step=>1}.freeze
 
   # Just going to avoid the leapyear issue, 29 days for Feb. HOWTO FIX? :-??
   DAYS_IN_MONTH = [31,29,31,30,31,30,31,31,30,31,30,31]
@@ -175,7 +175,7 @@ module Gtk2Diary
         false
       }
 
-      @sort_order.value = md[SORT].to_i
+      @sort_order.set_value(md[SORT].to_i)
       @previous = [self.diary_entry_filename, @label.text, @sort_order.value.to_i]
       Gtk2App.pack(self,pack)
     end
