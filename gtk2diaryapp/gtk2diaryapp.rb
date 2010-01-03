@@ -123,6 +123,7 @@ module Gtk2Diary
   end
 
   class TitleBox < Gtk::HBox
+    attr_reader :sort_order
     def diary_entry_filename
       return Gtk2Diary.diary_entry_filename( @date.label, @sort_order.value.to_i, @label.text )
     end
@@ -238,6 +239,15 @@ module Gtk2Diary
       @delete.value = v
       @revert.value = v
       @title_box.can_focus = v
+      if v then
+        @delete.show
+        @revert.show
+        @title_box.sort_order.show
+      else
+        @delete.hide
+        @revert.hide
+        @title_box.sort_order.hide
+      end
     end
   end
 
@@ -256,10 +266,11 @@ module Gtk2Diary
   end
 
   class LabelsCloud < Gtk::VBox
+    include Configuration
     attr_reader :labels
     def add(label)
-      @length += label.length + Configuration::GUI[:padding]
-      if @length > Configuration::LABELS_CLOUD_WIDTH then
+      @length += label.length + GUI[:padding]
+      if @length > LABELS_CLOUD_WIDTH then
         @length = 0
         @hbox = Gtk::HBox.new
         Gtk2App.pack(@hbox,self)
@@ -273,22 +284,18 @@ module Gtk2Diary
 
     def initialize(pack, time_frame)
       super()
-      # note @labels gets redifined a bit later
       @time_frame = time_frame
-      @labels = Hash.new(0)
-      @labels[Configuration::DEFAULT_LABEL] = 0
-      Find.find(Configuration::DIARY_DIRECTORY){|fn|
+      labels = Hash.new(0.0)
+      labels[DEFAULT_LABEL] = 0.0
+      now = Time.now
+      Find.find(DIARY_DIRECTORY){|fn|
         if md = DIARY_TXT_FILE.match(fn) then
-          @labels[ md[LABEL] ] += 1
+          # abs incase mtime > now, but should not happen
+          # newer files weighted more...
+          labels[ md[LABEL] ] += WEIGHT_SCALE / ( WEIGHT_SCALE + (now - File.mtime(fn)).abs )
         end
       }
-      # note redefinition of @labels here
-      @labels = @labels.sort{|a,b|
-        ret = b[1] <=> a[1]
-        ret = a[0].length <=> b[0].length	if ret == 0
-        ret = a[0] <=> b[0]			if ret == 0
-        ret
-      }.map{|x| x[0]}
+      @labels = labels.sort{|a,b| b[1]<=>a[1]}.map{|x| x[0]}[0..MAX_LABELS]
 
       @length = 0
       @hbox = Gtk::HBox.new
@@ -391,18 +398,19 @@ module Gtk2Diary
       files.sort{|a,b| sign*(a[0]<=>b[0])}.each {|fn,md|
         DiaryEntry.new(fn, md, self)
       }
-      self.lock(@lock) if @lock
       self.show_all
+      self.lock(@lock) if @lock
     end
   end
 
   class ControlPane < Gtk::VBox
+    include Configuration
     def initialize
       super()
       hbox = Gtk::HBox.new
       Gtk2Diary.invert_sort_hook = invert_sort =
-	Gtk2App::CheckButtonLabel.new('Invert Sort', hbox, Configuration::INVERT_SORT_OPTIONS)
-      Gtk2App::CheckButtonLabel.new('Lock', hbox, Configuration::LOCK_OPTIONS){|c|
+	Gtk2App::CheckButtonLabel.new('Invert Sort', hbox, INVERT_SORT_OPTIONS)
+      Gtk2App::CheckButtonLabel.new('Lock', hbox, LOCK_OPTIONS){|c|
 	Gtk2Diary.lock(c.active?)
       }
       Gtk2App.pack(hbox,self)
@@ -419,7 +427,7 @@ module Gtk2Diary
         UserSpace.mkdir("/diary/#{date}")
         # Find largest sort_int in the directory
         i = STARTS
-        Find.find(Configuration::DIARY_DIRECTORY+'/'+date){|fn|
+        Find.find(DIARY_DIRECTORY+'/'+date){|fn|
           if md = DIARY_TXT_FILE.match(fn) then
             i = md[SORT].to_i + 1	if md[SORT].to_i >= i
           end
@@ -447,7 +455,7 @@ module Gtk2Diary
           false
         }
       }
-      new_entry.value = Configuration::DEFAULT_LABEL
+      new_entry.value = DEFAULT_LABEL
 
       today = Gtk2App::Button.new('Today', hbox){|value|
         date_today = Date.today

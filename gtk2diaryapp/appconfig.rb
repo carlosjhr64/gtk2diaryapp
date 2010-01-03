@@ -3,6 +3,7 @@ module Configuration
   INITIAL_LOCK = false # set this to true to have the diary start out locked
   DAYS_TO_HOLD_BAK = 7 # number of day to hold *.bak file before deleting on exit, nil if never delete.
   DEFAULT_LABEL = 'Today'
+  MAX_LABELS = 28
 
   # Stuff you probably won't edit..
   KEYWORDS_ENTRY_WIDTH = 220
@@ -17,6 +18,7 @@ module Configuration
   GUI[:window_size] = [750, 500]
   INVERT_SORT_OPTIONS = {:active=>true,:font=>FONT[:small]}
   LOCK_OPTIONS = {:active=>INITIAL_LOCK,:font=>FONT[:small]}
+  WEIGHT_SCALE = 86400.0 # seconds in a day is 60*60*24
 
   # Stuff you'll probably mess up very badly if you edit...
   DIARY_DIRECTORY = UserSpace::DIRECTORY+'/diary'
