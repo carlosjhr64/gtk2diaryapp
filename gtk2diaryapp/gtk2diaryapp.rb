@@ -16,6 +16,7 @@ module Gtk2Diary
 
   STARTS = 100
   ENDS	= 999
+  SPIN_BUTTON_OPTIONS = {:min=>STARTS,:mas=>ENDS,:step=>1}.freeze
 
   # Just going to avoid the leapyear issue, 29 days for Feb. HOWTO FIX? :-??
   DAYS_IN_MONTH = [31,29,31,30,31,30,31,31,30,31,30,31]
@@ -79,13 +80,9 @@ module Gtk2Diary
     return "#{Configuration::DIARY_DIRECTORY}/#{date}/#{sort_order}.#{label}.#{TXT}"
   end
 
-  class TimeFrame < Gtk::ComboBox
+  class TimeFrame < Gtk2App::ComboBox
     def initialize(pack)
-      super()
-      Gtk2App.common(self,pack)
-      ['All Time', 'Last 365 Days', 'Last 90 Days', 'Last 30 Days', 'Year', 'Month', 'Day'].each {|item|
-        self.append_text("Search #{item}")
-      }
+      super(Configuration::TIME_FRAMES,pack)
       # Yes, a global, bite me!  Alright, adding some safeties...
       $active_time_frame = ($active_time_frame.nil?)? Configuration::ACTIVE_TIME_FRAME: $active_time_frame.to_i
       $active_time_frame = 0 if $active_time_frame < 0 || $active_time_frame > 6
@@ -160,7 +157,7 @@ module Gtk2Diary
         Gtk2Diary.calendar_hook.select_day(value[2])
       }
       @date.value = [md[YEAR].to_i, md[MONTH].to_i, md[DAY].to_i]
-      @sort_order = Gtk2App::SpinButton.new(self,ENDS,STARTS)
+      @sort_order = Gtk2App::SpinButton.new(self,SPIN_BUTTON_OPTIONS)
       @sort_order.signal_connect('focus-out-event'){ # can't use Gtk2App::SpinButton's changed signal
         if @previous && !(@previous[2] == @sort_order.value.to_i) then
           filename = self.diary_entry_filename
@@ -191,11 +188,11 @@ module Gtk2Diary
   class DiaryEntry < Gtk::VBox
     def update
       filename = @title_box.diary_entry_filename
-      if @buffer.text.length > 0 then
-        md5sum = Digest::MD5.hexdigest(@buffer.text)
+      if @text_view.text.length > 0 then
+        md5sum = Digest::MD5.hexdigest(@text_view.text)
         if !(md5sum == @md5sum) then
           File.rename(filename, filename+'.bak')
-          File.open(filename,'w'){|fh| fh.puts @buffer.text}
+          File.open(filename,'w'){|fh| fh.puts @text_view.text}
         end
       else
         File.rename(filename, filename+'.bak')
@@ -205,32 +202,29 @@ module Gtk2Diary
     def initialize(filename, md, pack)
       super()
       @title_box = TitleBox.new(md,self)
-      @buffer = Gtk::TextBuffer.new
 
+      @text_view = nil # defined later
       @revert = Gtk2App::Button.new('Restore', @title_box){|value|
         filename = @title_box.diary_entry_filename
-        File.open(filename,'r'){|fh| @buffer.text = fh.read}
+        File.open(filename,'r'){|fh| @text_view.text = fh.read}
       }
       @revert.value = true
 
       @delete = Gtk2App::Button.new('Delete', @title_box){
-        @buffer.text = ''
+        @text_view.text = ''
         pack.remove(self)
         self.destroy
       }
       @delete.value = true
 
-      File.open(filename,'r'){|fh| @buffer.text = fh.read}
-      @md5sum = Digest::MD5.hexdigest(@buffer.text)
-      @text_view = Gtk::TextView.new(@buffer)
-      @text_view.wrap_mode = Gtk::TextTag::WRAP_WORD
-      @text_view.set_border_window_size(Gtk::TextView::WINDOW_TOP, 10)
+      text = nil; File.open(filename,'r'){|fh| text = fh.read}
+      @md5sum = Digest::MD5.hexdigest(text)
+      @text_view = Gtk2App::TextView.new(text,self,Configuration::TEXTVIEW_OPTIONS)
 
-      Gtk2App.common(@text_view, self)
-      Gtk2App.common(self, pack)
+      Gtk2App.pack(self, pack)
       self.signal_connect('destroy'){ self.update }
 
-      @text_view.grab_focus if @buffer.text.length == 0 && @text_view.can_focus?
+      @text_view.grab_focus if @text_view.text.length == 0 && @text_view.can_focus?
     end
 
     def lock(v)
@@ -252,7 +246,8 @@ module Gtk2Diary
         Gtk2Diary.populate_hook(date_range, nil, nil, keywords.text)
       }
       search.value = true
-      pack.pack_start( self, false, false, Configuration::GUI[:padding] )
+      #pack.pack_start( self, false, false, Configuration::GUI[:padding] )
+      Gtk2App.pack(self,pack)
     end
   end
 
@@ -263,7 +258,8 @@ module Gtk2Diary
       if @length > Configuration::LABELS_CLOUD_WIDTH then
         @length = 0
         @hbox = Gtk::HBox.new
-        self.pack_start( @hbox, false, false, Configuration::GUI[:padding] )
+        #self.pack_start( @hbox, false, false, Configuration::GUI[:padding] )
+        Gtk2App.pack(@hbox,self)
       end
       search_label = Gtk2App::Button.new(label, @hbox){|value|
         date_range = @time_frame.value
@@ -293,9 +289,11 @@ module Gtk2Diary
 
       @length = 0
       @hbox = Gtk::HBox.new
-      self.pack_start( @hbox, false, false, Configuration::GUI[:padding] )
+      #self.pack_start( @hbox, false, false, Configuration::GUI[:padding] )
+      Gtk2App.pack(@hbox,self)
       @labels.each{|label| add(label) }
-      pack.pack_start( self, false, false, Configuration::GUI[:padding] )
+      #pack.pack_start( self, false, false, Configuration::GUI[:padding] )
+      Gtk2App.pack(self,pack)
     end
   end
 
@@ -402,11 +400,11 @@ module Gtk2Diary
       super()
       hbox = Gtk::HBox.new
       Gtk2Diary.invert_sort_hook = invert_sort =
-	Gtk2App::CheckButtonLabel.new('Invert Sort', hbox, true, Configuration::FONT[:small])
-      Gtk2App::CheckButtonLabel.new('Lock', hbox, Configuration::INITIAL_LOCK, Configuration::FONT[:small]){|c|
+	Gtk2App::CheckButtonLabel.new('Invert Sort', hbox, {:active=>true,:font=>Configuration::FONT[:small]}) # TBD code review / reduction
+      Gtk2App::CheckButtonLabel.new('Lock', hbox, {:active=>Configuration::INITIAL_LOCK,:font=>Configuration::FONT[:small]}){|c|
 	Gtk2Diary.lock(c.active?)
       }
-      Gtk2App.common(hbox,self)
+      Gtk2App.pack(hbox,self)
       Gtk2Diary.calendar_hook = calendar = Calendar.new
       hbox = Gtk::HBox.new
       new_entry = Gtk2App::Button.new('New Entry', hbox){|value|
@@ -442,7 +440,7 @@ module Gtk2Diary
         else
           raise "Oh, no! WHY?? Why me!? Oh, the humanity!!!"
         end
-        Gtk.timeout_add(1000*Configuration::SLEEP[:short]){
+        Gtk.timeout_add(250){
           # 100000, to be squash to actual limit
           Gtk2Diary.vscrollbar_hook.value = (Gtk2Diary.invert_sort_hook)? 0: 100000
           false
@@ -476,8 +474,7 @@ end
   
       # Control pane
       control_pane = Gtk2Diary::ControlPane.new
-      sw_control = Gtk::ScrolledWindow.new
-      sw_control.add_with_viewport(control_pane)
+      sw_control = Gtk2App::ScrolledWindow.new(control_pane)
       hpaned.add(sw_control)
 
       # Results pane
@@ -485,9 +482,8 @@ end
       Gtk2Diary.populate_hook = results_pane
       today = Date.today
       Gtk2Diary.populate_hook( today..today )
-      sw_results = Gtk::ScrolledWindow.new
+      sw_results = Gtk2App::ScrolledWindow.new(results_pane)
       Gtk2Diary.vscrollbar_hook = sw_results.vscrollbar
-      sw_results.add_with_viewport(results_pane)
       hpaned.add(sw_results)
   
       window.add(hpaned)

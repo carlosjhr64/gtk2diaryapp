@@ -1,9 +1,18 @@
 #!/usr/bin/env ruby
 require 'rubygems'
-gem 'gtk2applib', '~> 2.4.0'
+gem 'gtk2applib', '~> 4.4.0'
 require 'gtk2applib/gtk2_app'
 
-# The About info
+
+Gtk2App.init( {
+	:name		=> 'Ruby-Gnome Diary',
+	:tooltip	=> 'Diary',
+	:FILE		=> __FILE__,
+	} )
+
+UserSpace.mkdir('/diary')
+require 'gtk2diaryapp/gtk2diaryapp'
+
 about = {
 	:authors	=> ['carlosjhr64@gmail.com'],
         'comments'      => 'Ruby-Gtk2 Diary',
@@ -12,19 +21,11 @@ about = {
 	:license	=> 'GPL',
 	:copyright	=> '2009-Aug-28',
 	}
-
-# Miscellaneous info on this application/file
-application = {
-	:name		=> 'Ruby-Gnome Diary',
-	:tooltip	=> 'Diary',
-	:FILE		=> __FILE__,
-	}
-
-Gtk2App.instance(application, about) do |window|
-  UserSpace.mkdir('/diary')
-  require 'gtk2diaryapp/gtk2diaryapp'
+Gtk2App.main_window(about) do |window|
   Gtk2DiaryApp.new(window)
 end
+
+Gtk2App.finalize
 
 if Configuration::DAYS_TO_HOLD_BAK then
   require 'find'
