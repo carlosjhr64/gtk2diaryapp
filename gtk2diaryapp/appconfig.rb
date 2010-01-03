@@ -4,6 +4,7 @@ module Configuration
   DAYS_TO_HOLD_BAK = 7 # number of day to hold *.bak file before deleting on exit, nil if never delete.
   DEFAULT_LABEL = 'Today'
   MAX_LABELS = 28
+  MAX_RESULTS = 100
 
   # Stuff you probably won't edit..
   KEYWORDS_ENTRY_WIDTH = 220

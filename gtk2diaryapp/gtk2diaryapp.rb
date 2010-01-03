@@ -18,7 +18,7 @@ module Gtk2Diary
   ENDS	= 999
   SPIN_BUTTON_OPTIONS = {:min=>STARTS,:max=>ENDS,:step=>1}.freeze
 
-  # Just going to avoid the leapyear issue, 29 days for Feb. HOWTO FIX? :-??
+  # Just going to avoid the leap year issue, 29 days for Feb. HOWTO FIX? :-??
   DAYS_IN_MONTH = [31,29,31,30,31,30,31,31,30,31,30,31]
 
   @@populate_active = true
@@ -48,16 +48,26 @@ module Gtk2Diary
     @@populate_hook.lock(v)
   end
 
+  @@keyword_search_form = nil
+  def self.keyword_search_form=(v)
+    @@keyword_search_form = v
+  end
+  def self.keyword_search_form
+    @@keyword_search_form
+  end
 
-  @@add_label_hook = nil
-  def self.add_label_hook(label)
-    if !@@add_label_hook.labels.include?(label) then
-      @@add_label_hook.add(label)
-      @@add_label_hook.show_all
+  @@labels_cloud = nil
+  def self.labels_cloud_add(label)
+    if !@@labels_cloud.labels.include?(label) then
+      @@labels_cloud.add(label)
+      @@labels_cloud.show_all
     end
   end
-  def self.add_label_hook=(value)
-    @@add_label_hook = value
+  def self.labels_cloud=(value)
+    @@labels_cloud = value
+  end
+  def self.labels_cloud
+    @@labels_cloud
   end
 
   @@vscrollbar_hook = nil
@@ -145,7 +155,7 @@ module Gtk2Diary
             if File.rename(@previous[0], filename) then # TBD: if File.rename :-??
               @previous[0] = filename
               @previous[1] = @label.text
-              Gtk2Diary.add_label_hook(@label.text)
+              Gtk2Diary.labels_cloud_add(@label.text)
             end
           end
         end
@@ -252,13 +262,14 @@ module Gtk2Diary
   end
 
   class KeywordSearchForm < Gtk::HBox
+    attr_reader :keywords
     def initialize(pack, time_frame)
       super()
-      keywords = Gtk2App::Entry.new('',self)
-      keywords.width_request = Configuration::KEYWORDS_ENTRY_WIDTH
+      @keywords = Gtk2App::Entry.new('',self)
+      @keywords.width_request = Configuration::KEYWORDS_ENTRY_WIDTH
       search = Gtk2App::Button.new('Search', self){|value|
         date_range = time_frame.value
-        Gtk2Diary.populate_hook(date_range, nil, nil, keywords.text)
+        Gtk2Diary.populate_hook(date_range, nil, nil, @keywords.text)
       }
       search.value = true
       Gtk2App.pack(self,pack)
@@ -277,7 +288,9 @@ module Gtk2Diary
       end
       search_label = Gtk2App::Button.new(label, @hbox){|value|
         date_range = @time_frame.value
-        Gtk2Diary.populate_hook(date_range, nil, value)
+        keywords = Gtk2Diary.keyword_search_form.keywords.text.strip
+        keywords = nil if keywords.length==0
+        Gtk2Diary.populate_hook(date_range, nil, value, keywords)
       }
       search_label.value = label
     end
@@ -355,7 +368,8 @@ module Gtk2Diary
   class ResultsPane < Gtk::VBox
     def initialize
       super
-      @lock = Configuration::INITIAL_LOCK
+      @lock = nil
+      Gtk.timeout_add(250){ self.lock(Configuration::INITIAL_LOCK); false }
     end
 
     def clear
@@ -372,9 +386,10 @@ module Gtk2Diary
       end
     end
 
-    def keywords_matches(fn,keywords)
+    def keywords_matches(fn,keywords,label)
       buffer = nil
       File.open(fn,'r'){|fh| buffer= fh.read}
+      buffer += ' '+label
       words = buffer.split(/\W+/).map{|x| x.upcase}.uniq
       keys = keywords.split(/\W+/).map{|x| x.upcase}.uniq
       keys.each{|key| return false if !words.include?(key)}
@@ -389,13 +404,15 @@ module Gtk2Diary
           entry_date = Date.new(md[YEAR].to_i, md[MONTH].to_i, md[DAY].to_i)
           if !date_range || date_range.include?(entry_date) then
           if (!sort_int || md[SORT]==sort_int) && (!label || md[LABEL]==label) then
-            files.push([fn,md]) if !keywords || keywords_matches(fn,keywords)
+          if !keywords || keywords_matches(fn, keywords, (label)? '': md[LABEL]) then
+            files.push([fn,md])
+          end
           end
           end
         end
       }
       sign = (Gtk2Diary.invert_sort_hook)? -1: 1
-      files.sort{|a,b| sign*(a[0]<=>b[0])}.each {|fn,md|
+      files.sort{|a,b| sign*(a[0]<=>b[0])}[0..Configuration::MAX_RESULTS].each {|fn,md|
         DiaryEntry.new(fn, md, self)
       }
       self.show_all
@@ -469,8 +486,8 @@ module Gtk2Diary
       Gtk2App.common(hbox,self)
       Gtk2App.common(calendar,self)
       time_frame = TimeFrame.new(self)
-      keyword_search_form = KeywordSearchForm.new( self, time_frame )
-      Gtk2Diary.add_label_hook = LabelsCloud.new( self, time_frame )
+      Gtk2Diary.keyword_search_form = KeywordSearchForm.new( self, time_frame )
+      Gtk2Diary.labels_cloud = LabelsCloud.new( self, time_frame )
     end
   end
 end
