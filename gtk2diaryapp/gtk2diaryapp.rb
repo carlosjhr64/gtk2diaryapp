@@ -141,7 +141,7 @@ module Gtk2Diary
             @label.text = @previous[1]
           else
             # move
-            if File.rename(@previous[0], filename) then
+            if File.rename(@previous[0], filename) then # TBD: if File.rename :-??
               @previous[0] = filename
               @previous[1] = @label.text
               Gtk2Diary.add_label_hook(@label.text)
@@ -166,7 +166,7 @@ module Gtk2Diary
             @sort_order.value.to_i = @previous[2]
           else
             # move
-            if File.rename(@previous[0], filename) then
+            if File.rename(@previous[0], filename) then # TBD: if File.rename :-??
               @previous[0] = filename
               @previous[2] = @sort_order.value.to_i
             end
@@ -174,6 +174,7 @@ module Gtk2Diary
         end
         false
       }
+
       @sort_order.value = md[SORT].to_i
       @previous = [self.diary_entry_filename, @label.text, @sort_order.value.to_i]
       Gtk2App.pack(self,pack)
@@ -191,11 +192,11 @@ module Gtk2Diary
       if @text_view.text.length > 0 then
         md5sum = Digest::MD5.hexdigest(@text_view.text)
         if !(md5sum == @md5sum) then
-          File.rename(filename, filename+'.bak')
+          File.rename(filename, filename+'.bak') if File.exist?(filename)
           File.open(filename,'w'){|fh| fh.puts @text_view.text}
         end
       else
-        File.rename(filename, filename+'.bak')
+        File.rename(filename, filename+'.bak') if File.exist?(filename)
       end
     end
 
@@ -206,7 +207,11 @@ module Gtk2Diary
       @text_view = nil # defined later
       @revert = Gtk2App::Button.new('Restore', @title_box){|value|
         filename = @title_box.diary_entry_filename
-        File.open(filename,'r'){|fh| @text_view.text = fh.read}
+        if File.exist?(filename) then
+          File.open(filename,'r'){|fh| @text_view.text = fh.read}
+        else
+          @text_view.text = ''
+        end
       }
       @revert.value = true
 
