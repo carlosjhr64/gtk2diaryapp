@@ -24,12 +24,8 @@ your entries.
 New Entry
 Pressing this button adds a new entry to the
 selected date on the calendar.
-By default, new entries are labeled "Today".
-You can edit this label, but the application
-expects there to be at least a "Today" entry
-in any date entry (beta, might change this).
-It works best if the user makes "Today" a short
-summary of the day's activities.
+By default, new entries are labeled "Today" --
+You can edit this label in the appconfig file.
 
 Today
 The Today button navigates the application
@@ -74,4 +70,3 @@ and move
 	***.deleted_entry.txt.bak
 back to
 	***.deleted_entry.txt
-I may add a revert option in a future release.
