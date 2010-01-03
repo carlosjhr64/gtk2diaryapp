@@ -6,6 +6,7 @@ module Configuration
 
   # Stuff you probably won't edit..
   KEYWORDS_ENTRY_WIDTH = 220
+  LABEL_ENTRY_WIDTH = 100
   LABELS_CLOUD_WIDTH = 32
   PANE_POSITION	= 310
   TEXTVIEW_OPTIONS = {
@@ -14,6 +15,8 @@ module Configuration
 	}.freeze
   MENU[:close] = '_Close' #  Close destroys GUI.
   GUI[:window_size] = [750, 500]
+  INVERT_SORT_OPTIONS = {:active=>true,:font=>FONT[:small]}
+  LOCK_OPTIONS = {:active=>INITIAL_LOCK,:font=>FONT[:small]}
 
   # Stuff you'll probably mess up very badly if you edit...
   DIARY_DIRECTORY = UserSpace::DIRECTORY+'/diary'

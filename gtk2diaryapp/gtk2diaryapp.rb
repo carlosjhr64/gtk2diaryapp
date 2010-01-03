@@ -149,7 +149,7 @@ module Gtk2Diary
           end
         end
       }
-      @label.width_request = 100 # Configurable?
+      @label.width_request = Configuration::LABEL_ENTRY_WIDTH
       @date = Gtk2App::Button.new(md[YEAR]+'/'+md[MONTH]+'/'+md[DAY], self){|value|
         Gtk2Diary.populate_active = false
         Gtk2Diary.calendar_hook.select_month(value[1],value[0])
@@ -396,8 +396,8 @@ module Gtk2Diary
       super()
       hbox = Gtk::HBox.new
       Gtk2Diary.invert_sort_hook = invert_sort =
-	Gtk2App::CheckButtonLabel.new('Invert Sort', hbox, {:active=>true,:font=>Configuration::FONT[:small]}) # TBD code review / reduction
-      Gtk2App::CheckButtonLabel.new('Lock', hbox, {:active=>Configuration::INITIAL_LOCK,:font=>Configuration::FONT[:small]}){|c|
+	Gtk2App::CheckButtonLabel.new('Invert Sort', hbox, Configuration::INVERT_SORT_OPTIONS)
+      Gtk2App::CheckButtonLabel.new('Lock', hbox, Configuration::LOCK_OPTIONS){|c|
 	Gtk2Diary.lock(c.active?)
       }
       Gtk2App.pack(hbox,self)
