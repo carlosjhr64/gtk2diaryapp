@@ -18,7 +18,7 @@ about = {
         'website'       => 'http://ruby-gnome-apps.blogspot.com/search/label/Diary',
         'website-label' => 'Ruby-Gnome Diary',
 	:license	=> 'GPL',
-	:copyright	=> '2010-01-03 15:06:26',
+	:copyright	=> '2010-01-03 15:08:13',
 	}
 Gtk2App.main_window(about) do |window|
   Gtk2Diary::App.new(window)
