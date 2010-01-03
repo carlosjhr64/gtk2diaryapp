@@ -21,21 +21,10 @@ module Gtk2Diary
   # Just going to avoid the leap year issue, 29 days for Feb. HOWTO FIX? :-??
   DAYS_IN_MONTH = [31,29,31,30,31,30,31,31,30,31,30,31]
 
-  @@populate_active = true
-  def self.populate_active
-    @@populate_active
-  end
-  def self.populate_active=(value)
-    @@populate_active = value
-  end
+  HOOKS = Hash.new
+  HOOKS[:populate_active] = true
 
-  @@calendar_hook = nil
-  def self.calendar_hook
-    @@calendar_hook
-  end
-  def self.calendar_hook=(value)
-    @@calendar_hook = value
-  end
+  HOOKS[:calendar] = nil
 
   @@populate_hook = nil
   def self.populate_hook(*argvs)
@@ -101,7 +90,7 @@ module Gtk2Diary
     end
 
     def value
-      date = Gtk2Diary.calendar_hook.date
+      date = HOOKS[:calendar].date
       ret = nil
       case self.active
         when 1
@@ -162,10 +151,10 @@ module Gtk2Diary
       }
       @label.width_request = Configuration::LABEL_ENTRY_WIDTH
       @date = Gtk2App::Button.new(md[YEAR]+'/'+md[MONTH]+'/'+md[DAY], self){|value|
-        Gtk2Diary.populate_active = false
-        Gtk2Diary.calendar_hook.select_month(value[1],value[0])
-        Gtk2Diary.populate_active = true
-        Gtk2Diary.calendar_hook.select_day(value[2])
+        HOOKS[:populate_active] = false
+        HOOKS[:calendar].select_month(value[1],value[0])
+        HOOKS[:populate_active] = true
+        HOOKS[:calendar].select_day(value[2])
       }
       @date.value = [md[YEAR].to_i, md[MONTH].to_i, md[DAY].to_i]
       @sort_order = Gtk2App::SpinButton.new(self,SPIN_BUTTON_OPTIONS)
@@ -342,24 +331,24 @@ module Gtk2Diary
       super()
       mark_days
       self.signal_connect('month-changed'){
-        if Gtk2Diary.populate_active then
-          Gtk2Diary.populate_active = false
+        if HOOKS[:populate_active] then
+          HOOKS[:populate_active] = false
           marked = mark_days
           start_date = Date.new(self.year,self.month+1,1)
           end_date = start_date + DAYS_IN_MONTH[self.month]
           date_range = start_date..end_date
           Gtk2Diary.populate_hook(date_range, STARTS.to_s, Configuration::DEFAULT_LABEL)
           # if marked, we'll be going to day-selected next, so need to flag it as nil to skip it.
-          Gtk2Diary.populate_active = (marked)? nil: true
+          HOOKS[:populate_active] = (marked)? nil: true
         end
       }
       self.signal_connect('day-selected'){
-        if Gtk2Diary.populate_active then
+        if HOOKS[:populate_active] then
           start_date = Date.new(self.year, self.month+1,  self.day)
           Gtk2Diary.populate_hook( start_date..start_date )
-        elsif Gtk2Diary.populate_active.nil?
+        elsif HOOKS[:populate_active].nil? then
           # skipped, but restoring to true
-          Gtk2Diary.populate_active = true
+          HOOKS[:populate_active] = true
         end
       }
     end
@@ -431,7 +420,7 @@ module Gtk2Diary
 	Gtk2Diary.lock(c.active?)
       }
       Gtk2App.pack(hbox,self)
-      Gtk2Diary.calendar_hook = calendar = Calendar.new
+      HOOKS[:calendar] = calendar = Calendar.new
       hbox = Gtk::HBox.new
       new_entry = Gtk2App::Button.new('New Entry', hbox){|value|
         date = calendar.date
@@ -476,9 +465,9 @@ module Gtk2Diary
 
       today = Gtk2App::Button.new('Today', hbox){|value|
         date_today = Date.today
-        Gtk2Diary.populate_active = false
+        HOOKS[:populate_active] = false
         calendar.select_month(date_today.month,date_today.year)
-        Gtk2Diary.populate_active = true
+        HOOKS[:populate_active] = true
         calendar.select_day(date_today.day)
       }
       today.value = true
