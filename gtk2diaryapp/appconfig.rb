@@ -1,25 +1,24 @@
 module Configuration
-  DIARY_DIRECTORY = UserSpace::DIRECTORY+'/diary'
+  # Stuff you might want to edit...
+  INITIAL_LOCK = false # set this to true to have the diary start out locked
+  DAYS_TO_HOLD_BAK = 7 # number of day to hold *.bak file before deleting on exit, nil if never delete.
+  DEFAULT_LABEL = 'Today'
+
+  # Stuff you probably won't edit..
   KEYWORDS_ENTRY_WIDTH = 220
   LABELS_CLOUD_WIDTH = 32
-  DEFAULT_LABEL = 'Today'
   PANE_POSITION	= 310
-  ACTIVE_TIME_FRAME = 1
-  DAYS_TO_HOLD_BAK = 7 # number of day to hold *.bak file before deleting on exit, nil if never delete.
-  INITIAL_LOCK = false # set this to true to have the diary start out locked
-
   TEXTVIEW_OPTIONS = {
 	:wrap_mode=>Gtk::TextTag::WRAP_WORD,
 	:border_window_size=>[Gtk::TextView::WINDOW_TOP, 10]
 	}.freeze
-
-
-# open/close are so fast, dock seems wasteful.
-  MENU[:dock] = '_Dock'	# Dock only hides GUI
-  MENU[:close] = '_Close' #  Close destroys GUI, but keeps daemon running. Goes to tray.
-
+  MENU[:close] = '_Close' #  Close destroys GUI.
   GUI[:window_size] = [750, 500]
 
-# Do not edit semantically :-B
+  # Stuff you'll probably mess up very badly if you edit...
+  DIARY_DIRECTORY = UserSpace::DIRECTORY+'/diary'
+  UserSpace.mkdir('/diary')
+  # Do not edit semantically, nor reorder :-B
   TIME_FRAMES = ['All Time', 'Last 365 Days', 'Last 90 Days', 'Last 30 Days', 'Year', 'Month', 'Day'].freeze
+  ACTIVE_TIME_FRAME = 1
 end

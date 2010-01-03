@@ -10,7 +10,6 @@ Gtk2App.init( {
 	:FILE		=> __FILE__,
 	} )
 
-UserSpace.mkdir('/diary')
 require 'gtk2diaryapp/gtk2diaryapp'
 
 about = {
