@@ -176,7 +176,7 @@ module Gtk2Diary
       }
       @sort_order.value = md[SORT].to_i
       @previous = [self.diary_entry_filename, @label.text, @sort_order.value.to_i]
-      pack.pack_start(self, false, false, Configuration::GUI[:padding])
+      Gtk2App.pack(self,pack)
     end
 
     def can_focus=(v)
@@ -246,7 +246,6 @@ module Gtk2Diary
         Gtk2Diary.populate_hook(date_range, nil, nil, keywords.text)
       }
       search.value = true
-      #pack.pack_start( self, false, false, Configuration::GUI[:padding] )
       Gtk2App.pack(self,pack)
     end
   end
@@ -258,7 +257,6 @@ module Gtk2Diary
       if @length > Configuration::LABELS_CLOUD_WIDTH then
         @length = 0
         @hbox = Gtk::HBox.new
-        #self.pack_start( @hbox, false, false, Configuration::GUI[:padding] )
         Gtk2App.pack(@hbox,self)
       end
       search_label = Gtk2App::Button.new(label, @hbox){|value|
@@ -289,10 +287,8 @@ module Gtk2Diary
 
       @length = 0
       @hbox = Gtk::HBox.new
-      #self.pack_start( @hbox, false, false, Configuration::GUI[:padding] )
       Gtk2App.pack(@hbox,self)
       @labels.each{|label| add(label) }
-      #pack.pack_start( self, false, false, Configuration::GUI[:padding] )
       Gtk2App.pack(self,pack)
     end
   end
