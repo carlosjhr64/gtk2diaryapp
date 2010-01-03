@@ -23,56 +23,12 @@ module Gtk2Diary
 
   HOOKS = Hash.new
   HOOKS[:populate_active] = true
-
-  HOOKS[:calendar] = nil
-
-  @@populate_hook = nil
-  def self.populate_hook(*argvs)
-    @@populate_hook.populate(*argvs)
-  end
-  def self.populate_hook=(value)
-    @@populate_hook = value
-  end
-  def self.lock(v)
-    @@populate_hook.lock(v)
-  end
-
-  @@keyword_search_form = nil
-  def self.keyword_search_form=(v)
-    @@keyword_search_form = v
-  end
-  def self.keyword_search_form
-    @@keyword_search_form
-  end
-
-  @@labels_cloud = nil
+  HOOKS[:invert_sort] = HOOKS[:calendar] = HOOKS[:results_pane] = HOOKS[:keyword_search_form] = HOOKS[:vscrollbar] = HOOKS[:labels_cloud] = nil
   def self.labels_cloud_add(label)
-    if !@@labels_cloud.labels.include?(label) then
-      @@labels_cloud.add(label)
-      @@labels_cloud.show_all
+    if !HOOKS[:labels_cloud].labels.include?(label) then
+      HOOKS[:labels_cloud].add(label)
+      HOOKS[:labels_cloud].show_all
     end
-  end
-  def self.labels_cloud=(value)
-    @@labels_cloud = value
-  end
-  def self.labels_cloud
-    @@labels_cloud
-  end
-
-  @@vscrollbar_hook = nil
-  def self.vscrollbar_hook
-    @@vscrollbar_hook
-  end
-  def self.vscrollbar_hook=(value)
-    @@vscrollbar_hook = value
-  end
-
-  @@invert_sort_hook = nil
-  def self.invert_sort_hook
-    @@invert_sort_hook.active?
-  end
-  def self.invert_sort_hook=(value)
-    @@invert_sort_hook = value
   end
 
   def self.diary_entry_filename(date,sort_order,label)
@@ -258,7 +214,7 @@ module Gtk2Diary
       @keywords.width_request = Configuration::KEYWORDS_ENTRY_WIDTH
       search = Gtk2App::Button.new('Search', self){|value|
         date_range = time_frame.value
-        Gtk2Diary.populate_hook(date_range, nil, nil, @keywords.text)
+        HOOKS[:results_pane].populate(date_range, nil, nil, @keywords.text)
       }
       search.value = true
       Gtk2App.pack(self,pack)
@@ -277,9 +233,9 @@ module Gtk2Diary
       end
       search_label = Gtk2App::Button.new(label, @hbox){|value|
         date_range = @time_frame.value
-        keywords = Gtk2Diary.keyword_search_form.keywords.text.strip
+        keywords = HOOKS[:keyword_search_form].keywords.text.strip
         keywords = nil if keywords.length==0
-        Gtk2Diary.populate_hook(date_range, nil, value, keywords)
+        HOOKS[:results_pane].populate(date_range, nil, value, keywords)
       }
       search_label.value = label
     end
@@ -337,7 +293,7 @@ module Gtk2Diary
           start_date = Date.new(self.year,self.month+1,1)
           end_date = start_date + DAYS_IN_MONTH[self.month]
           date_range = start_date..end_date
-          Gtk2Diary.populate_hook(date_range, STARTS.to_s, Configuration::DEFAULT_LABEL)
+          HOOKS[:results_pane].populate(date_range, STARTS.to_s, Configuration::DEFAULT_LABEL)
           # if marked, we'll be going to day-selected next, so need to flag it as nil to skip it.
           HOOKS[:populate_active] = (marked)? nil: true
         end
@@ -345,7 +301,7 @@ module Gtk2Diary
       self.signal_connect('day-selected'){
         if HOOKS[:populate_active] then
           start_date = Date.new(self.year, self.month+1,  self.day)
-          Gtk2Diary.populate_hook( start_date..start_date )
+          HOOKS[:results_pane].populate( start_date..start_date )
         elsif HOOKS[:populate_active].nil? then
           # skipped, but restoring to true
           HOOKS[:populate_active] = true
@@ -400,7 +356,8 @@ module Gtk2Diary
           end
         end
       }
-      sign = (Gtk2Diary.invert_sort_hook)? -1: 1
+      #sign = (Gtk2Diary.invert_sort_hook)? -1: 1
+      sign = (HOOKS[:invert_sort].active?)? -1: 1
       files.sort{|a,b| sign*(a[0]<=>b[0])}[0..Configuration::MAX_RESULTS].each {|fn,md|
         DiaryEntry.new(fn, md, self)
       }
@@ -414,11 +371,9 @@ module Gtk2Diary
     def initialize
       super()
       hbox = Gtk::HBox.new
-      Gtk2Diary.invert_sort_hook = invert_sort =
-	Gtk2App::CheckButtonLabel.new('Invert Sort', hbox, INVERT_SORT_OPTIONS)
-      Gtk2App::CheckButtonLabel.new('Lock', hbox, LOCK_OPTIONS){|c|
-	Gtk2Diary.lock(c.active?)
-      }
+      #Gtk2Diary.invert_sort_hook = invert_sort = Gtk2App::CheckButtonLabel.new('Invert Sort', hbox, INVERT_SORT_OPTIONS)
+      HOOKS[:invert_sort] = invert_sort = Gtk2App::CheckButtonLabel.new('Invert Sort', hbox, INVERT_SORT_OPTIONS)
+      Gtk2App::CheckButtonLabel.new('Lock', hbox, LOCK_OPTIONS){|c| HOOKS[:results_pane].lock(c.active?) }
       Gtk2App.pack(hbox,self)
       HOOKS[:calendar] = calendar = Calendar.new
       hbox = Gtk::HBox.new
@@ -451,13 +406,14 @@ module Gtk2Diary
           fn = Gtk2Diary.diary_entry_filename(date,i,value)
           File.open(fn,'w'){|fh|} # touch
           start_date = Date.new(year.to_i, month.to_i, day.to_i)
-          Gtk2Diary.populate_hook( start_date..start_date )
+          HOOKS[:results_pane].populate( start_date..start_date )
         else
           raise "Oh, no! WHY?? Why me!? Oh, the humanity!!!"
         end
         Gtk.timeout_add(250){
           # 100000, to be squash to actual limit
-          Gtk2Diary.vscrollbar_hook.value = (Gtk2Diary.invert_sort_hook)? 0: 100000
+          #HOOKS[:vscrollbar].value = (Gtk2Diary.invert_sort_hook)? 0: 100000
+          HOOKS[:vscrollbar].value = (HOOKS[:invert_sort].active?)? 0: 100000
           false
         }
       }
@@ -475,13 +431,12 @@ module Gtk2Diary
       Gtk2App.common(hbox,self)
       Gtk2App.common(calendar,self)
       time_frame = TimeFrame.new(self)
-      Gtk2Diary.keyword_search_form = KeywordSearchForm.new( self, time_frame )
-      Gtk2Diary.labels_cloud = LabelsCloud.new( self, time_frame )
+      HOOKS[:keyword_search_form] = KeywordSearchForm.new( self, time_frame )
+      HOOKS[:labels_cloud] = LabelsCloud.new( self, time_frame )
     end
   end
-end
 
-  class Gtk2DiaryApp
+  class App
     def initialize(window)
       # Create paned windows
       hpaned = Gtk::HPaned.new
@@ -494,13 +449,14 @@ end
 
       # Results pane
       results_pane = Gtk2Diary::ResultsPane.new
-      Gtk2Diary.populate_hook = results_pane
+      HOOKS[:results_pane] = results_pane
       today = Date.today
-      Gtk2Diary.populate_hook( today..today )
+      HOOKS[:results_pane].populate( today..today )
       sw_results = Gtk2App::ScrolledWindow.new(results_pane)
-      Gtk2Diary.vscrollbar_hook = sw_results.vscrollbar
+      HOOKS[:vscrollbar] = sw_results.vscrollbar
       hpaned.add(sw_results)
   
       window.add(hpaned)
     end
   end
+end
