@@ -20,6 +20,10 @@ Setting the lock will prevent entries from accidently being edited,
 by preventing "focus" on them.
 It's a good idea to set the lock if you're just reading/reviewing
 your entries.
+The app starts unlocked, but I strongly advice you edit
+	~/.gtk2diaryapp-1/appconfig-1.3.rb
+and set INITIAL_LOCK to true.
+	INITIAL_LOCK = true
 
 New Entry
 Pressing this button adds a new entry to the

@@ -287,9 +287,9 @@ module Gtk2Diary
       super()
       mark_days
       self.signal_connect('month-changed'){
+        marked = mark_days
         if HOOKS[:populate_active] then
           HOOKS[:populate_active] = false
-          marked = mark_days
           start_date = Date.new(self.year,self.month+1,1)
           end_date = start_date + DAYS_IN_MONTH[self.month]
           date_range = start_date..end_date
@@ -412,7 +412,6 @@ module Gtk2Diary
         end
         Gtk.timeout_add(250){
           # 100000, to be squash to actual limit
-          #HOOKS[:vscrollbar].value = (Gtk2Diary.invert_sort_hook)? 0: 100000
           HOOKS[:vscrollbar].value = (HOOKS[:invert_sort].active?)? 0: 100000
           false
         }
@@ -428,8 +427,8 @@ module Gtk2Diary
       }
       today.value = true
 
-      Gtk2App.common(hbox,self)
-      Gtk2App.common(calendar,self)
+      Gtk2App.pack(hbox,self)
+      Gtk2App.pack(calendar,self)
       time_frame = TimeFrame.new(self)
       HOOKS[:keyword_search_form] = KeywordSearchForm.new( self, time_frame )
       HOOKS[:labels_cloud] = LabelsCloud.new( self, time_frame )
