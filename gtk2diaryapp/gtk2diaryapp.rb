@@ -1,4 +1,3 @@
-# $Date: 2009/03/18 21:51:32 $
 require 'digest/md5'
 require 'find'
 require 'date'
