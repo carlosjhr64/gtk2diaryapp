@@ -14,10 +14,10 @@ require 'gtk2diaryapp/gtk2diaryapp'
 
 about = {
 	:authors	=> ['carlosjhr64@gmail.com'],
-        'website'       => 'http://ruby-gnome-apps.blogspot.com/search/label/Diary',
-        'website-label' => 'Ruby-Gnome Diary',
+        :website       => 'http://ruby-gnome-apps.blogspot.com/search/label/Diary',
+        :website_label => 'Ruby-Gnome Diary',
 	:license	=> 'GPL',
-	:copyright	=> '2010-02-24 04:10:38',
+	:copyright	=> '2010-02-24 10:17:35',
 	}
 Gtk2App.main_window(about) do |window|
   Gtk2Diary::App.new(window)
