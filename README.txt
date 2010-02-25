@@ -2,12 +2,7 @@
 
 Ruby-Gnome Diary makes it easy to maintain and
 search through short journal entries.
-Keep short notes on your daily activities,
-such as your phone call to a client,
-your milestones on a project,
-what you had for breakfast,
-how many chin ups you did on your work out,
-your weight....
+Keep short notes on your daily activities.
 It's easy to figure out how to label your short entries and
 quickly get to any item you want to review.
 
@@ -20,8 +15,7 @@ Setting the lock will prevent entries from accidently being edited,
 by preventing "focus" on them.
 It's a good idea to set the lock if you're just reading/reviewing
 your entries.
-The app starts unlocked, but I strongly advice you edit
-	~/.gtk2diaryapp-1/appconfig-1.3.rb
+The app starts unlocked, but I strongly advice you edit appconfig
 and set INITIAL_LOCK to true.
 	INITIAL_LOCK = true
 
@@ -35,18 +29,34 @@ Today
 The Today button navigates the application
 back to today's date.
 
-Search [All Time, ..., Year, Month, Day]
+
+Last <N> Days
+The Last <N> Days button will show the entries for the last <N> days.
+You can edit <N> in the appconfig file.
+
+Calendar/Date
+Clicking on a date will display all entries for that date.
+
+Calendar/Month
+Changing the month will show all default labeled entries ("Today")
+with a starting sort id ("100") for the selected month.
+It is in this way that "/100.Today.txt" entries are special, and
+works best if these entries are summaries for the day.
+
+[All Time, Last 365 Days, ... , Year, Month, Day]
 The search time frame combo box allows one
-to limit the keywords or label search to
+to limit the keywords and/or label search to
 a particular timeframe.
 
 Keyword Search
-The Search button searches the text entries,
+The Search button searches the text entries by keywords
+within the specified time frame.
+If no keywords are entered, it'll return all entries
 within the specified time frame.
 
 "Cloud" Label Buttons
 Searches for the entries by label within the
-specified time frame.
+specified time frame (and keywords if any).
 
 Year/Month/Day
 The date button above a pariticular entry
@@ -74,3 +84,8 @@ and move
 	***.deleted_entry.txt.bak
 back to
 	***.deleted_entry.txt
+
+The appconfig file, the configuration file for this app, is
+	~/.gtk2diaryapp-1/appconfig-1.4.rb
+The appconfig file defines a MAX_RESULTS constant.
+This is the maximum number of results the app will display.

@@ -20,7 +20,6 @@ about = {
 	:copyright	=> '2010-02-24 10:17:35',
 	}
 Gtk2App.main_window(about) do |window|
-# Gtk2Diary::App.new(window)
   include Gtk2Diary
 
   # Create paned windows
@@ -36,7 +35,7 @@ Gtk2App.main_window(about) do |window|
   results_pane = ResultsPane.new
   HOOKS[:results_pane] = results_pane
   today = Date.today
-  HOOKS[:results_pane].populate( today..today )
+  HOOKS[:results_pane].populate( (today-Configuration::LATEST)..today )
   sw_results = Gtk2App::ScrolledWindow.new(results_pane)
   HOOKS[:vscrollbar] = sw_results.vscrollbar
   hpaned.add(sw_results)

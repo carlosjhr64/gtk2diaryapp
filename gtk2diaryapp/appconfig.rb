@@ -27,4 +27,6 @@ module Configuration
   # Do not edit semantically, nor reorder :-B
   TIME_FRAMES = ['All Time', 'Last 365 Days', 'Last 90 Days', 'Last 30 Days', 'Year', 'Month', 'Day'].freeze
   ACTIVE_TIME_FRAME = 1
+
+  LATEST = 7 # days
 end

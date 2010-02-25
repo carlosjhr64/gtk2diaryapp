@@ -109,7 +109,7 @@ module Gtk2Diary
       end
     end
 
-    def date_button_clicked
+    def date_button_clicked(value)
       HOOKS[:populate_active] = false
       HOOKS[:calendar].select_month(value[1],value[0])
       HOOKS[:populate_active] = true
@@ -137,13 +137,15 @@ module Gtk2Diary
       @previous = nil
       @label = Gtk2App::Entry.new(md[LABEL],self){ label_entry }
       @label.width_request = Configuration::LABEL_ENTRY_WIDTH
-      @date = Gtk2App::Button.new(md[YEAR]+'/'+md[MONTH]+'/'+md[DAY], self){ date_button_clicked }
+
+      @date = Gtk2App::Button.new(md[YEAR]+'/'+md[MONTH]+'/'+md[DAY], self){|value| date_button_clicked(value) }
       @date.value = [md[YEAR].to_i, md[MONTH].to_i, md[DAY].to_i]
+
       @sort_order = Gtk2App::SpinButton.new(self,SPIN_BUTTON_OPTIONS)
       # can't use Gtk2App::SpinButton's changed signal
-      @sort_order.signal_connect('focus-out-event'){ date_button_clicked }
-
+      @sort_order.signal_connect('focus-out-event'){ sort_order_focus_out_event }
       @sort_order.set_value(md[SORT].to_i)
+
       @previous = [self.diary_entry_filename, @label.text, @sort_order.value.to_i]
       Gtk2App.pack(self,pack)
     end
@@ -386,7 +388,7 @@ module Gtk2Diary
   class ControlPane < Gtk::VBox
     include Configuration
 
-    def self.new_entry_button_clicked(value)
+    def self.new_entry_button_clicked
       date = HOOKS[:calendar].date
       year = date[0].to_s
       month = date[1].to_s2
@@ -405,14 +407,14 @@ module Gtk2Diary
       if i > ENDS then
         i -= 1
         # Find highest non-collision
-        fn = Gtk2Diary.diary_entry_filename(date,i,value)
+        fn = Gtk2Diary.diary_entry_filename(date,i,DEFAULT_LABEL)
         while File.exist?(fn) && (i >= STARTS) do
           i -= 1
-          fn = Gtk2Diary.diary_entry_filename(date,i,value)
+          fn = Gtk2Diary.diary_entry_filename(date,i,DEFAULT_LABEL)
         end
       end
       if (i >= STARTS) && (i <= ENDS) then
-        fn = Gtk2Diary.diary_entry_filename(date,i,value)
+        fn = Gtk2Diary.diary_entry_filename(date,i,DEFAULT_LABEL)
         File.open(fn,'w'){|fh|} # touch
         start_date = Date.new(year.to_i, month.to_i, day.to_i)
         HOOKS[:results_pane].populate( start_date..start_date )
@@ -427,11 +429,20 @@ module Gtk2Diary
     end
 
     def self.today_button_clicked
-      date_today = Date.today
+      today = Date.today
       HOOKS[:populate_active] = false
-      HOOKS[:calendar].select_month(date_today.month,date_today.year)
+      HOOKS[:calendar].select_month(today.month,today.year)
       HOOKS[:populate_active] = true
-      HOOKS[:calendar].select_day(date_today.day)
+      HOOKS[:calendar].select_day(today.day)
+    end
+
+    def self.latest_button_clicked
+      today = Date.today
+      HOOKS[:populate_active] = false
+      HOOKS[:calendar].select_month(today.month,today.year)
+      HOOKS[:calendar].select_day(today.day)
+      HOOKS[:populate_active] = true
+      HOOKS[:results_pane].populate( (today-LATEST)..today )
     end
 
     def initialize
@@ -442,12 +453,12 @@ module Gtk2Diary
       Gtk2App::CheckButtonLabel.new('Lock', hbox, LOCK_OPTIONS){|checkbox| HOOKS[:results_pane].lock(checkbox.active?) }
       Gtk2App.pack(hbox,self)
       HOOKS[:calendar] = Calendar.new
-      hbox = Gtk::HBox.new
-      new_entry = Gtk2App::Button.new('New Entry', hbox){|value| ControlPane.new_entry_button_clicked(value) }
-      new_entry.value = DEFAULT_LABEL
 
-      today = Gtk2App::Button.new('Today', hbox){ ControlPane.today_button_clicked }
-      today.value = true
+      hbox = Gtk::HBox.new
+
+      Gtk2App::Button.new('New Entry', hbox){ ControlPane.new_entry_button_clicked }
+      Gtk2App::Button.new('Today', hbox){ ControlPane.today_button_clicked }
+      Gtk2App::Button.new("Last #{LATEST} Days", hbox){ ControlPane.latest_button_clicked }
 
       Gtk2App.pack(hbox,self)
       Gtk2App.pack(HOOKS[:calendar], self)
