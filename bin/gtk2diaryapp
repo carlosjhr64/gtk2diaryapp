@@ -20,7 +20,28 @@ about = {
 	:copyright	=> '2010-02-24 10:17:35',
 	}
 Gtk2App.main_window(about) do |window|
-  Gtk2Diary::App.new(window)
+# Gtk2Diary::App.new(window)
+  include Gtk2Diary
+
+  # Create paned windows
+  hpaned = Gtk::HPaned.new
+  hpaned.position = Configuration::PANE_POSITION
+  
+  # Control pane
+  control_pane = ControlPane.new
+  sw_control = Gtk2App::ScrolledWindow.new(control_pane)
+  hpaned.add(sw_control)
+
+  # Results pane
+  results_pane = ResultsPane.new
+  HOOKS[:results_pane] = results_pane
+  today = Date.today
+  HOOKS[:results_pane].populate( today..today )
+  sw_results = Gtk2App::ScrolledWindow.new(results_pane)
+  HOOKS[:vscrollbar] = sw_results.vscrollbar
+  hpaned.add(sw_results)
+  
+  window.add(hpaned)
 end
 
 Gtk2App.finalize
