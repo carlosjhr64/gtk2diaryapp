@@ -5,6 +5,7 @@ module Configuration
   DEFAULT_LABEL = 'Today'
   MAX_LABELS = 28
   MAX_RESULTS = 100
+  LATEST = 7 # days
 
   # Stuff you probably won't edit..
   KEYWORDS_ENTRY_WIDTH = 220
@@ -27,6 +28,4 @@ module Configuration
   # Do not edit semantically, nor reorder :-B
   TIME_FRAMES = ['All Time', 'Last 365 Days', 'Last 90 Days', 'Last 30 Days', 'Year', 'Month', 'Day'].freeze
   ACTIVE_TIME_FRAME = 1
-
-  LATEST = 7 # days
 end

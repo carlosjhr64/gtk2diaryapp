@@ -29,7 +29,6 @@ Today
 The Today button navigates the application
 back to today's date.
 
-
 Last <N> Days
 The Last <N> Days button will show the entries for the last <N> days.
 You can edit <N> in the appconfig file.
