@@ -1,6 +1,7 @@
+module Gtk2AppLib
 module Configuration
   # Stuff you might want to edit...
-  INITIAL_LOCK = false # set this to true to have the diary start out locked
+  INITIAL_LOCK = true # set this to false to have the diary start out un-locked
   DAYS_TO_HOLD_BAK = 7 # number of day to hold *.bak file before deleting on exit, nil if never delete.
   DEFAULT_LABEL = 'Today'
   MAX_LABELS = 28
@@ -17,10 +18,10 @@ module Configuration
 	:border_window_size=>[Gtk::TextView::WINDOW_TOP, 10]
 	}.freeze
   MENU[:close] = '_Close' #  Close destroys GUI.
-  GUI[:window_size] = [750, 500]
   INVERT_SORT_OPTIONS = {:active=>true,:font=>FONT[:small]}
   LOCK_OPTIONS = {:active=>INITIAL_LOCK,:font=>FONT[:small]}
   WEIGHT_SCALE = 86400.0 # seconds in a day is 60*60*24
+  WINDOW_DEFAULT_SIZE[0], WINDOW_DEFAULT_SIZE[1] = 750, 500
 
   # Stuff you'll probably mess up very badly if you edit...
   DIARY_DIRECTORY = UserSpace::DIRECTORY+'/diary'
@@ -28,4 +29,5 @@ module Configuration
   # Do not edit semantically, nor reorder :-B
   TIME_FRAMES = ['All Time', 'Last 365 Days', 'Last 90 Days', 'Last 30 Days', 'Year', 'Month', 'Day'].freeze
   ACTIVE_TIME_FRAME = 1
+end
 end
