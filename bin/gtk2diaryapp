@@ -19,7 +19,7 @@ begin
         :website       => 'http://ruby-gnome-apps.blogspot.com/search/label/Diary',
         :website_label => 'Ruby-Gnome Diary',
 	:license	=> 'GPL',
-	:copyright	=> '2010-08-09 16:37:00',
+	:copyright	=> '2010-08-09 16:53:59',
 	}
   program.window(about) do |window|
     require 'gtk2diaryapp'

@@ -455,7 +455,7 @@ module Gtk2DiaryApp
       Gtk2AppLib::Button.new('Today', hbox){ ControlPane.today_button_clicked }
       Gtk2AppLib::Button.new("Last #{LATEST} Entries", hbox){ ControlPane.latest_button_clicked }
 
-      HOOKS[:calendar] = Gtk2AppLib::Calendar.new(self)
+      HOOKS[:calendar] = Calendar.new(self)
       time_frame = TimeFrame.new(self)
       HOOKS[:keyword_search_form] = KeywordSearchForm.new( self, time_frame )
       HOOKS[:labels_cloud] = LabelsCloud.new( self, time_frame )
