@@ -19,7 +19,7 @@ begin
         :website       => 'http://ruby-gnome-apps.blogspot.com/search/label/Diary',
         :website_label => 'Ruby-Gnome Diary',
 	:license	=> 'GPL',
-	:copyright	=> '2010-08-09 17:17:23',
+	:copyright	=> '2010-08-09 17:20:45',
 	}
   program.window(about) do |window|
     require 'gtk2diaryapp'
@@ -40,7 +40,7 @@ begin
     results_pane = ResultsPane.new(sw_results)
     HOOKS[:results_pane] = results_pane
     today = Date.today
-    HOOKS[:results_pane].populate( (today-Configuration::LATEST)..today )
+    HOOKS[:results_pane].populate(nil,nil,nil,nil, Configuration::LATEST)
  
   end
 rescue Exception
