@@ -15,7 +15,7 @@ module Gtk2DiaryApp
 
   STARTS = 100
   ENDS	= 999
-  SPIN_BUTTON_OPTIONS = {:min=>STARTS,:max=>ENDS,:step=>1}.freeze
+  SPIN_BUTTON_OPTIONS = { :set_range  => [STARTS,ENDS], :set_increments => [1,10], }.freeze
 
   # Just going to avoid the leap year issue, 29 days for Feb. HOWTO FIX? :-??
   DAYS_IN_MONTH = [31,29,31,30,31,30,31,31,30,31,30,31]
@@ -37,7 +37,7 @@ module Gtk2DiaryApp
 
   # Searches can have a time frame specified.
   # This combo box sets the time frame.
-  class TimeFrame < Gtk2AppLib::ComboBox
+  class TimeFrame < Gtk2AppLib::Widgets::ComboBox
     def initialize(pack)
       super(Configuration::TIME_FRAMES,pack)
       # Yes, a global, bite me!  Alright, adding some safeties...
@@ -84,7 +84,7 @@ module Gtk2DiaryApp
     end
   end
 
-  class TitleBox < Gtk2AppLib::HBox
+  class TitleBox < Gtk2AppLib::Widgets::HBox
     attr_reader :sort_order
     def diary_entry_filename
       return Gtk2DiaryApp.diary_entry_filename( @date.label, @sort_order.value.to_i, @label.text )
@@ -135,13 +135,13 @@ module Gtk2DiaryApp
     def initialize(md,pack)
       super(pack)
       @previous = nil
-      @label = Gtk2AppLib::Entry.new(md[LABEL],self){ label_entry }
+      @label = Gtk2AppLib::Widgets::Entry.new(md[LABEL],self,'focus-out-event'){ label_entry; false }
       @label.width_request = Configuration::LABEL_ENTRY_WIDTH
 
-      @date = Gtk2AppLib::Button.new(md[YEAR]+'/'+md[MONTH]+'/'+md[DAY], self){|value| date_button_clicked(value) }
-      @date.value = [md[YEAR].to_i, md[MONTH].to_i, md[DAY].to_i]
+      @date = Gtk2AppLib::Widgets::Button.new(md[YEAR]+'/'+md[MONTH]+'/'+md[DAY], self, 'clicked'){|value,*emits| date_button_clicked(value) }
+      @date.is = [md[YEAR].to_i, md[MONTH].to_i, md[DAY].to_i]
 
-      @sort_order = Gtk2AppLib::SpinButton.new(self,SPIN_BUTTON_OPTIONS)
+      @sort_order = Gtk2AppLib::Widgets::SpinButton.new(self,SPIN_BUTTON_OPTIONS)
       # can't use Gtk2AppLib::SpinButton's changed signal
       @sort_order.signal_connect('focus-out-event'){ sort_order_focus_out_event }
       @sort_order.set_value(md[SORT].to_i)
@@ -156,7 +156,7 @@ module Gtk2DiaryApp
   end
 
   # Single diary entries
-  class DiaryEntry < Gtk2AppLib::VBox
+  class DiaryEntry < Gtk2AppLib::Widgets::VBox
     def update
       filename = @title_box.diary_entry_filename
       if @text_view.text.length > 0 then
@@ -175,7 +175,7 @@ module Gtk2DiaryApp
       @title_box = TitleBox.new(md,self)
 
       @text_view = nil # defined later
-      @revert = Gtk2AppLib::Button.new('Restore', @title_box){|value|
+      @revert = Gtk2AppLib::Widgets::Button.new('Restore', @title_box,'clicked'){|value,*emits|
         filename = @title_box.diary_entry_filename
         if File.exist?(filename) then
           File.open(filename,'r'){|fh| @text_view.text = fh.read}
@@ -183,18 +183,18 @@ module Gtk2DiaryApp
           @text_view.text = ''
         end
       }
-      @revert.value = true
+      @revert.is = true
 
-      @delete = Gtk2AppLib::Button.new('Delete', @title_box){
+      @delete = Gtk2AppLib::Widgets::Button.new('Delete', @title_box,'clicked'){
         @text_view.text = ''
         pack.remove(self)
         self.destroy
       }
-      @delete.value = true
+      @delete.is = true
 
       text = nil; File.open(filename,'r'){|fh| text = fh.read}
       @md5sum = Digest::MD5.hexdigest(text)
-      @text_view = Gtk2AppLib::TextView.new(text,self,Configuration::TEXTVIEW_OPTIONS)
+      @text_view = Gtk2AppLib::Widgets::TextView.new(text,self,Configuration::TEXTVIEW_OPTIONS)
 
       self.signal_connect('destroy'){ self.update }
 
@@ -204,8 +204,8 @@ module Gtk2DiaryApp
     def lock(locked)
       opened = !locked
       @text_view.can_focus = opened
-      @delete.value = opened
-      @revert.value = opened
+      @delete.is = opened
+      @revert.is = opened
       @title_box.can_focus = opened
       if opened then
         @delete.show
@@ -220,63 +220,63 @@ module Gtk2DiaryApp
   end
 
   # The form to search for entries by keywords
-  class KeywordSearchForm < Gtk2AppLib::HBox
+  class KeywordSearchForm < Gtk2AppLib::Widgets::HBox
     attr_reader :keywords
     def initialize(pack, time_frame)
       super(pack)
-      @keywords = Gtk2AppLib::Entry.new('',self)
+      @keywords = Gtk2AppLib::Widgets::Entry.new('',self)
       @keywords.width_request = Configuration::KEYWORDS_ENTRY_WIDTH
-      search = Gtk2AppLib::Button.new('Search', self){|value|
+      search = Gtk2AppLib::Widgets::Button.new('Search', self, 'clicked'){|value,*emits|
         date_range = time_frame.value
         HOOKS[:results_pane].populate(date_range, nil, nil, @keywords.text)
       }
-      search.value = true
+      search.is = true
     end
   end
 
   # Shows a list of labels as buttons
-  class LabelsCloud < Gtk2AppLib::VBox
-    include Configuration
+  class LabelsCloud < Gtk2AppLib::Widgets::VBox
     attr_reader :labels
 
     def add(label)
-      @length += label.length + WIDGET_OPTIONS[:padding]
-      if @length > LABELS_CLOUD_WIDTH then
+      @labels.push(label)
+      @length += label.length + Gtk2AppLib::Widgets::WIDGET[:Widgets][:pack_start].last
+      if @length > Configuration::LABELS_CLOUD_WIDTH then
         @length = 0
-        @hbox = Gtk2AppLib::HBox.new(self)
+        @hbox = Gtk2AppLib::Widgets::HBox.new(self)
       end
-      search_label = Gtk2AppLib::Button.new(label, @hbox){|value|
+      search_label = Gtk2AppLib::Widgets::Button.new(label, @hbox, 'clicked'){|is,*emits|
         date_range = @time_frame.value
         keywords = HOOKS[:keyword_search_form].keywords.text.strip
         keywords = nil if keywords.length==0
-        HOOKS[:results_pane].populate(date_range, nil, value, keywords)
+        HOOKS[:results_pane].populate(date_range, nil, is, keywords)
       }
-      search_label.value = label
+      search_label.is = label
     end
 
     def initialize(pack, time_frame)
       super(pack)
       @time_frame = time_frame
       labels = Hash.new(0.0)
-      labels[DEFAULT_LABEL] = 0.0
+      labels[Configuration::DEFAULT_LABEL] = 0.0
       now = Time.now
-      Find.find(DIARY_DIRECTORY){|fn|
+      Find.find(Configuration::DIARY_DIRECTORY){|fn|
         if md = DIARY_TXT_FILE.match(fn) then
           # abs incase mtime > now, but should not happen
           # newer files weighted more...
-          labels[ md[LABEL] ] += WEIGHT_SCALE / ( WEIGHT_SCALE + (now - File.mtime(fn)).abs )
+          labels[ md[LABEL] ] += Configuration::WEIGHT_SCALE / ( Configuration::WEIGHT_SCALE + (now - File.mtime(fn)).abs )
         end
       }
-      @labels = labels.sort{|a,b| b[1]<=>a[1]}.map{|x| x[0]}[0..MAX_LABELS]
 
       @length = 0
-      @hbox = Gtk2AppLib::HBox.new(self)
-      @labels.each{|label| add(label) }
+      @hbox = Gtk2AppLib::Widgets::HBox.new(self)
+      @labels = []
+      labels.sort{|a,b| b[1]<=>a[1]}.map{|x| x[0]}[0..Configuration::MAX_LABELS].each{|label| self.add(label) }
     end
   end
 
 
-  class Calendar < Gtk2AppLib::Calendar
+  class Calendar < Gtk2AppLib::Widgets::Calendar
     def mark_days
       marked = false
       self.clear_marks
@@ -322,7 +322,7 @@ module Gtk2DiaryApp
     end
   end
 
-  class ResultsPane < Gtk2AppLib::VBox
+  class ResultsPane < Gtk2AppLib::Widgets::VBox
     def initialize(pack)
       super(pack)
       @lock = nil
@@ -374,7 +374,7 @@ module Gtk2DiaryApp
       files = files[0..(chop-1)]
 
       while fn_md = files.shift do
-        DiaryEntry.new(*fn_md, self)
+        DiaryEntry.new(*fn_md+[self])
       end
       self.show_all
       self.lock(@lock) if @lock
@@ -382,8 +382,7 @@ module Gtk2DiaryApp
   end
 
   # Creates the pane containing the calendar, search, and tags cloud.
-  class ControlPane < Gtk2AppLib::VBox
-    include Configuration
+  class ControlPane < Gtk2AppLib::Widgets::VBox
 
     def self.new_entry_button_clicked
       date = HOOKS[:calendar].date
@@ -391,12 +390,13 @@ module Gtk2DiaryApp
       month = date[1].to_s2
       day = date[2].to_s2
       date = "#{year}/#{month}/#{day}"
-      UserSpace.mkdir("/diary/#{year}")
-      UserSpace.mkdir("/diary/#{year}/#{month}")
-      UserSpace.mkdir("/diary/#{date}")
+      dir = Configuration::DIARY_DIRECTORY
+      Gtk2AppLib::UserSpace.mkdir("#{dir}/#{year}")
+      Gtk2AppLib::UserSpace.mkdir("#{dir}/#{year}/#{month}")
+      Gtk2AppLib::UserSpace.mkdir("#{dir}/#{date}")
       # Find largest sort_int in the directory
       i = STARTS
-      Find.find(DIARY_DIRECTORY+'/'+date){|fn|
+      Find.find(Configuration::DIARY_DIRECTORY+'/'+date){|fn|
         if md = DIARY_TXT_FILE.match(fn) then
           i = md[SORT].to_i + 1	if md[SORT].to_i >= i
         end
@@ -404,14 +404,14 @@ module Gtk2DiaryApp
       if i > ENDS then
         i -= 1
         # Find highest non-collision
-        fn = Gtk2DiaryApp.diary_entry_filename(date,i,DEFAULT_LABEL)
+        fn = Gtk2DiaryApp.diary_entry_filename(date,i,Configuration::DEFAULT_LABEL)
         while File.exist?(fn) && (i >= STARTS) do
           i -= 1
-          fn = Gtk2DiaryApp.diary_entry_filename(date,i,DEFAULT_LABEL)
+          fn = Gtk2DiaryApp.diary_entry_filename(date,i,Configuration::DEFAULT_LABEL)
         end
       end
       if (i >= STARTS) && (i <= ENDS) then
-        fn = Gtk2DiaryApp.diary_entry_filename(date,i,DEFAULT_LABEL)
+        fn = Gtk2DiaryApp.diary_entry_filename(date,i,Configuration::DEFAULT_LABEL)
         File.open(fn,'w'){|fh|} # touch
         start_date = Date.new(year.to_i, month.to_i, day.to_i)
         HOOKS[:results_pane].populate( start_date..start_date )
@@ -439,21 +439,21 @@ module Gtk2DiaryApp
       HOOKS[:calendar].select_month(today.month,today.year)
       HOOKS[:calendar].select_day(today.day)
       HOOKS[:populate_active] = true
-      HOOKS[:results_pane].populate(nil,nil,nil,nil,LATEST)
+      HOOKS[:results_pane].populate(nil,nil,nil,nil,Configuration::LATEST)
     end
 
     def initialize(pack)
       super(pack)
-      hbox = Gtk2AppLib::HBox.new(self)
+      hbox = Gtk2AppLib::Widgets::HBox.new(self)
 
-      HOOKS[:invert_sort] = invert_sort = Gtk2AppLib::CheckButtonLabel.new('Invert Sort', hbox, INVERT_SORT_OPTIONS)
-      Gtk2AppLib::CheckButtonLabel.new('Lock', hbox, LOCK_OPTIONS){|checkbox| HOOKS[:results_pane].lock(checkbox.active?) }
+      HOOKS[:invert_sort] = invert_sort = Gtk2AppLib::Widgets::CheckButton.new('Invert Sort', hbox, Configuration::INVERT_SORT_OPTIONS)
+      Gtk2AppLib::Widgets::CheckButton.new('Lock', hbox, Configuration::LOCK_OPTIONS,'toggled'){|checkbox,*emits| HOOKS[:results_pane].lock(checkbox.active?) }
 
-      hbox = Gtk2AppLib::HBox.new(self)
+      hbox = Gtk2AppLib::Widgets::HBox.new(self)
 
-      Gtk2AppLib::Button.new('New Entry', hbox){ ControlPane.new_entry_button_clicked }
-      Gtk2AppLib::Button.new('Today', hbox){ ControlPane.today_button_clicked }
-      Gtk2AppLib::Button.new("Last #{LATEST} Entries", hbox){ ControlPane.latest_button_clicked }
+      Gtk2AppLib::Widgets::Button.new('New Entry', hbox,'clicked'){ ControlPane.new_entry_button_clicked }
+      Gtk2AppLib::Widgets::Button.new('Today', hbox,'clicked'){ ControlPane.today_button_clicked }
+      Gtk2AppLib::Widgets::Button.new("Last #{Configuration::LATEST} Entries", hbox,'clicked'){ ControlPane.latest_button_clicked }
 
       HOOKS[:calendar] = Calendar.new(self)
       time_frame = TimeFrame.new(self)

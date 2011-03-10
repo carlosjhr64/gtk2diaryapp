@@ -1,62 +1,55 @@
 #!/usr/bin/env ruby
 require 'rubygems'
-gem 'gtk2applib', '~> 7.2'
-require 'gtk2applib'
+gem 'gtk2applib', '~> 14.0'
+require 'gtk2applib' # Gtk2AppLib defined
 
 
 program = Gtk2AppLib::Program.new( {
-	:name		=> 'Ruby-Gnome Diary',
-	:tooltip	=> 'Diary',
-	:icon_name	=> 'Icon Test',
-	:FILE		=> __FILE__,
-	:lock		=> "Proceed anyways?",
+	'name'		=> 'Ruby-Gnome Diary',
+	'authors'	=> ['carlosjhr64@gmail.com'],
+        'website'       => 'https://sites.google.com/site/gtk2applib/home/gtk2applib-applications/gtk2diary',
+        'website_label' => 'Ruby-Gnome Diary',
+	'license'	=> 'GPL',
+	'copyright'	=> '2011-03-09 17:32:54',
 	} )
 
-include Gtk2AppLib
 begin
-  about = {
-	:authors	=> ['carlosjhr64@gmail.com'],
-        :website       => 'http://ruby-gnome-apps.blogspot.com/search/label/Diary',
-        :website_label => 'Ruby-Gnome Diary',
-	:license	=> 'GPL',
-	:copyright	=> '2010-08-09 17:20:45',
-	}
-  program.window(about) do |window|
-    require 'gtk2diaryapp'
-    include Gtk2DiaryApp
+  require 'gtk2diaryapp' # Gtk2DiaryApp defined
+  program.window do |window|
 
     # Create paned windows
-    hpaned = Gtk2AppLib::HPaned.new(window)
-    hpaned.position = Configuration::PANE_POSITION
+    hpaned = Gtk2AppLib::Widgets::HPaned.new(window)
+    hpaned.position = Gtk2DiaryApp::Configuration::PANE_POSITION
   
     # Control pane
-    sw_control = Gtk2AppLib::ScrolledWindow.new(hpaned)
-    control_pane = ControlPane.new(sw_control)
+    sw_control = Gtk2AppLib::Widgets::ScrolledWindow.new(hpaned)
+    control_pane = Gtk2DiaryApp::ControlPane.new(sw_control)
 
-    sw_results = Gtk2AppLib::ScrolledWindow.new(hpaned)
-    HOOKS[:vscrollbar] = sw_results.vscrollbar
+    sw_results = Gtk2AppLib::Widgets::ScrolledWindow.new(hpaned)
+    Gtk2DiaryApp::HOOKS[:vscrollbar] = sw_results.vscrollbar
 
     # Results pane
-    results_pane = ResultsPane.new(sw_results)
-    HOOKS[:results_pane] = results_pane
-    today = Date.today
-    HOOKS[:results_pane].populate(nil,nil,nil,nil, Configuration::LATEST)
- 
+    results_pane = Gtk2DiaryApp::ResultsPane.new(sw_results)
+    Gtk2DiaryApp::HOOKS[:results_pane] = results_pane
+    today = Date.today # Date defined
+    Gtk2DiaryApp::HOOKS[:results_pane].populate(nil,nil,nil,nil, Gtk2DiaryApp::Configuration::LATEST)
+
+    window.show_all 
   end
 rescue Exception
-  Gtk2AppLib.puts_bang!
+  $!.puts_bang!
 ensure
   program.finalize
 end
 
-#if Configuration::DAYS_TO_HOLD_BAK then
-#  require 'find'
-#  now = Time.now.to_i
-#  spd = 60*60*24
-#  Find.find(Configuration::DIARY_DIRECTORY){|fn|
-#    if fn=~/\.txt\.bak/ then
-#      days_old = (now - File.mtime(fn).to_i)/spd
-##      File.unlink(fn) if days_old > Configuration::DAYS_TO_HOLD_BAK
-#    end
-#  }
-#end
+if Gtk2DiaryApp::Configuration::DAYS_TO_HOLD_BAK then
+  require 'find'
+  now = Time.now.to_i
+  spd = 60*60*24
+  Find.find(Configuration::DIARY_DIRECTORY){|fn|
+    if fn=~/\.txt\.bak$/ then
+      days_old = (now - File.mtime(fn).to_i)/spd
+      File.unlink(fn) if days_old > Configuration::DAYS_TO_HOLD_BAK
+    end
+  }
+end

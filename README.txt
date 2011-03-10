@@ -85,6 +85,6 @@ back to
 	***.deleted_entry.txt
 
 The appconfig file, the configuration file for this app, is
-	~/.gtk2diaryapp-1/appconfig-1.4.rb
+	~/.gtk2diaryapp-1/appconfig-6.rb
 The appconfig file defines a MAX_RESULTS constant.
 This is the maximum number of results the app will display.
