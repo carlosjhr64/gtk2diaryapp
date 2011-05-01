@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 require 'rubygems'
-gem 'gtk2applib', '~> 14.0'
+gem 'gtk2applib', '~> 15.3'
 require 'gtk2applib' # Gtk2AppLib defined
 
 
@@ -10,7 +10,7 @@ program = Gtk2AppLib::Program.new( {
         'website'       => 'https://sites.google.com/site/gtk2applib/home/gtk2applib-applications/gtk2diary',
         'website_label' => 'Ruby-Gnome Diary',
 	'license'	=> 'GPL',
-	'copyright'	=> '2011-03-09 17:32:54',
+	'copyright'	=> '2011-05-01 10:35:37',
 	} )
 
 begin
@@ -26,13 +26,13 @@ begin
     control_pane = Gtk2DiaryApp::ControlPane.new(sw_control)
 
     sw_results = Gtk2AppLib::Widgets::ScrolledWindow.new(hpaned)
-    Gtk2DiaryApp::HOOKS[:vscrollbar] = sw_results.vscrollbar
+    Gtk2DiaryApp::HOOKS[:VSCROLLBAR] = sw_results.vscrollbar
 
     # Results pane
     results_pane = Gtk2DiaryApp::ResultsPane.new(sw_results)
-    Gtk2DiaryApp::HOOKS[:results_pane] = results_pane
+    Gtk2DiaryApp::HOOKS[:RESULTS_PANE] = results_pane
     today = Date.today # Date defined
-    Gtk2DiaryApp::HOOKS[:results_pane].populate(nil,nil,nil,nil, Gtk2DiaryApp::Configuration::LATEST)
+    Gtk2DiaryApp::HOOKS[:RESULTS_PANE].populate(nil,nil,nil,nil, Gtk2DiaryApp::Configuration::LATEST)
 
     window.show_all 
   end

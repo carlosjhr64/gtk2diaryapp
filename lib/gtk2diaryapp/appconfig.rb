@@ -12,6 +12,8 @@ module Configuration	# Configuration defined
   else
     MENU[:close] = '_Close'
   end
+
+  TIMEOUT[:ICONIFY] = 1000 # flash for a second
 end
 end
 
@@ -34,8 +36,8 @@ module Configuration
 	:wrap_mode= => Gtk::TextTag::WRAP_WORD,
 	:border_window_size => [Gtk::TextView::WINDOW_TOP, 10]
 	}.freeze
-  INVERT_SORT_OPTIONS = {:active= => true, :modify_font => Gtk2AppLib::Configuration::FONT[:Small]}
-  LOCK_OPTIONS = {:active= =>INITIAL_LOCK, :modify_font => Gtk2AppLib::Configuration::FONT[:Small]}
+  INVERT_SORT_OPTIONS = {:active= => true, :modify_font => Gtk2AppLib::Configuration::FONT[:SMALL]}
+  LOCK_OPTIONS = {:active= =>INITIAL_LOCK, :modify_font => Gtk2AppLib::Configuration::FONT[:SMALL]}
   WEIGHT_SCALE = 86400.0 # seconds in a day is 60*60*24
 
   # Stuff you'll probably mess up very badly if you edit...
@@ -44,5 +46,16 @@ module Configuration
   # Do not edit semantically, nor reorder :-B
   TIME_FRAMES = ['All Time', 'Last 365 Days', 'Last 90 Days', 'Last 30 Days', 'Year', 'Month', 'Day'].freeze
   ACTIVE_TIME_FRAME = 1
+
+  # Button Labels
+  clicked = 'clicked'
+  RESTORE	= ['Restore',	clicked]
+  DELETE	= ['Delete',	clicked]
+  SEARCH	= ['Search',	clicked]
+  INVERT	= ['Invert Sort',INVERT_SORT_OPTIONS]
+  LOCK		= ['Lock',	LOCK_OPTIONS, 'toggled']
+  NEW_ENTRY	= ['New Entry',	clicked]
+  TODAY		= ['Today',	clicked]
+  LATEST_ENTRIES = ["Last #{LATEST} Entries", clicked]
 end
 end

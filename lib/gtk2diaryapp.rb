@@ -21,13 +21,13 @@ module Gtk2DiaryApp
   DAYS_IN_MONTH = [31,29,31,30,31,30,31,31,30,31,30,31]
 
   HOOKS = Hash.new
-  HOOKS[:populate_active] = true
-  HOOKS[:invert_sort] = HOOKS[:calendar] = HOOKS[:results_pane] = HOOKS[:keyword_search_form] = HOOKS[:vscrollbar] = HOOKS[:labels_cloud] = nil
+  HOOKS[:POPULATE_ACTIVE] = true
+  HOOKS[:INVERT_SORT] = HOOKS[:CALENDAR] = HOOKS[:RESULTS_PANE] = HOOKS[:KEYWORD_SEARCH_FORM] = HOOKS[:VSCROLLBAR] = HOOKS[:LABELS_CLOUD] = nil
 
   def self.labels_cloud_add(label)
-    if !HOOKS[:labels_cloud].labels.include?(label) then
-      HOOKS[:labels_cloud].add(label)
-      HOOKS[:labels_cloud].show_all
+    if !HOOKS[:LABELS_CLOUD].labels.include?(label) then
+      HOOKS[:LABELS_CLOUD].add(label)
+      HOOKS[:LABELS_CLOUD].show_all
     end
   end
 
@@ -48,7 +48,7 @@ module Gtk2DiaryApp
     end
 
     def value
-      date = HOOKS[:calendar].date
+      date = HOOKS[:CALENDAR].date
       ret = nil
       case self.active
         when 1..3
@@ -110,10 +110,10 @@ module Gtk2DiaryApp
     end
 
     def date_button_clicked(value)
-      HOOKS[:populate_active] = false
-      HOOKS[:calendar].select_month(value[1],value[0])
-      HOOKS[:populate_active] = true
-      HOOKS[:calendar].select_day(value[2])
+      HOOKS[:POPULATE_ACTIVE] = false
+      HOOKS[:CALENDAR].select_month(value[1],value[0])
+      HOOKS[:POPULATE_ACTIVE] = true
+      HOOKS[:CALENDAR].select_day(value[2])
     end
 
     def sort_order_focus_out_event
@@ -175,7 +175,7 @@ module Gtk2DiaryApp
       @title_box = TitleBox.new(md,self)
 
       @text_view = nil # defined later
-      @revert = Gtk2AppLib::Widgets::Button.new('Restore', @title_box,'clicked'){|value,*emits|
+      @revert = Gtk2AppLib::Widgets::Button.new(*Configuration::RESTORE+[@title_box]){|value,*emits|
         filename = @title_box.diary_entry_filename
         if File.exist?(filename) then
           File.open(filename,'r'){|fh| @text_view.text = fh.read}
@@ -185,7 +185,7 @@ module Gtk2DiaryApp
       }
       @revert.is = true
 
-      @delete = Gtk2AppLib::Widgets::Button.new('Delete', @title_box,'clicked'){
+      @delete = Gtk2AppLib::Widgets::Button.new(*Configuration::DELETE+[@title_box]){
         @text_view.text = ''
         pack.remove(self)
         self.destroy
@@ -226,9 +226,9 @@ module Gtk2DiaryApp
       super(pack)
       @keywords = Gtk2AppLib::Widgets::Entry.new('',self)
       @keywords.width_request = Configuration::KEYWORDS_ENTRY_WIDTH
-      search = Gtk2AppLib::Widgets::Button.new('Search', self, 'clicked'){|value,*emits|
+      search = Gtk2AppLib::Widgets::Button.new(*Configuration::SEARCH+[self]){|value,*emits|
         date_range = time_frame.value
-        HOOKS[:results_pane].populate(date_range, nil, nil, @keywords.text)
+        HOOKS[:RESULTS_PANE].populate(date_range, nil, nil, @keywords.text)
       }
       search.is = true
     end
@@ -247,9 +247,9 @@ module Gtk2DiaryApp
       end
       search_label = Gtk2AppLib::Widgets::Button.new(label, @hbox, 'clicked'){|is,*emits|
         date_range = @time_frame.value
-        keywords = HOOKS[:keyword_search_form].keywords.text.strip
+        keywords = HOOKS[:KEYWORD_SEARCH_FORM].keywords.text.strip
         keywords = nil if keywords.length==0
-        HOOKS[:results_pane].populate(date_range, nil, is, keywords)
+        HOOKS[:RESULTS_PANE].populate(date_range, nil, is, keywords)
       }
       search_label.is = label
     end
@@ -300,23 +300,23 @@ module Gtk2DiaryApp
       mark_days
       self.signal_connect('month-changed'){
         marked = mark_days
-        if HOOKS[:populate_active] then
-          HOOKS[:populate_active] = false
+        if HOOKS[:POPULATE_ACTIVE] then
+          HOOKS[:POPULATE_ACTIVE] = false
           start_date = Date.new(self.year,self.month+1,1)
           end_date = start_date + DAYS_IN_MONTH[self.month]
           date_range = start_date..end_date
-          HOOKS[:results_pane].populate(date_range, STARTS.to_s, Configuration::DEFAULT_LABEL)
+          HOOKS[:RESULTS_PANE].populate(date_range, STARTS.to_s, Configuration::DEFAULT_LABEL)
           # if marked, we'll be going to day-selected next, so need to flag it as nil to skip it.
-          HOOKS[:populate_active] = (marked)? nil: true
+          HOOKS[:POPULATE_ACTIVE] = (marked)? nil: true
         end
       }
       self.signal_connect('day-selected'){
-        if HOOKS[:populate_active] then
+        if HOOKS[:POPULATE_ACTIVE] then
           start_date = Date.new(self.year, self.month+1,  self.day)
-          HOOKS[:results_pane].populate( start_date..start_date )
-        elsif HOOKS[:populate_active].nil? then
+          HOOKS[:RESULTS_PANE].populate( start_date..start_date )
+        elsif HOOKS[:POPULATE_ACTIVE].nil? then
           # skipped, but restoring to true
-          HOOKS[:populate_active] = true
+          HOOKS[:POPULATE_ACTIVE] = true
         end
       }
     end
@@ -369,7 +369,7 @@ module Gtk2DiaryApp
         end
       }
 
-      sign = (HOOKS[:invert_sort].active?)? -1: 1
+      sign = (HOOKS[:INVERT_SORT].active?)? -1: 1
       files.sort!{|a,b| sign*(a[0]<=>b[0])}
       files = files[0..(chop-1)]
 
@@ -385,7 +385,7 @@ module Gtk2DiaryApp
   class ControlPane < Gtk2AppLib::Widgets::VBox
 
     def self.new_entry_button_clicked
-      date = HOOKS[:calendar].date
+      date = HOOKS[:CALENDAR].date
       year = date[0].to_s
       month = date[1].to_s2
       day = date[2].to_s2
@@ -414,51 +414,51 @@ module Gtk2DiaryApp
         fn = Gtk2DiaryApp.diary_entry_filename(date,i,Configuration::DEFAULT_LABEL)
         File.open(fn,'w'){|fh|} # touch
         start_date = Date.new(year.to_i, month.to_i, day.to_i)
-        HOOKS[:results_pane].populate( start_date..start_date )
+        HOOKS[:RESULTS_PANE].populate( start_date..start_date )
       else
         raise "Oh, no! WHY?? Why me!? Oh, the humanity!!!"
       end
       Gtk.timeout_add(250){
         # 100000, to be squash to actual limit
-        HOOKS[:vscrollbar].value = (HOOKS[:invert_sort].active?)? 0: 100000
+        HOOKS[:VSCROLLBAR].value = (HOOKS[:INVERT_SORT].active?)? 0: 100000
         false
       }
     end
 
     def self.today_button_clicked
       today = Date.today
-      HOOKS[:populate_active] = false
-      HOOKS[:calendar].select_month(today.month,today.year)
-      HOOKS[:populate_active] = true
-      HOOKS[:calendar].select_day(today.day)
+      HOOKS[:POPULATE_ACTIVE] = false
+      HOOKS[:CALENDAR].select_month(today.month,today.year)
+      HOOKS[:POPULATE_ACTIVE] = true
+      HOOKS[:CALENDAR].select_day(today.day)
     end
 
     def self.latest_button_clicked
       today = Date.today
-      HOOKS[:populate_active] = false
-      HOOKS[:calendar].select_month(today.month,today.year)
-      HOOKS[:calendar].select_day(today.day)
-      HOOKS[:populate_active] = true
-      HOOKS[:results_pane].populate(nil,nil,nil,nil,Configuration::LATEST)
+      HOOKS[:POPULATE_ACTIVE] = false
+      HOOKS[:CALENDAR].select_month(today.month,today.year)
+      HOOKS[:CALENDAR].select_day(today.day)
+      HOOKS[:POPULATE_ACTIVE] = true
+      HOOKS[:RESULTS_PANE].populate(nil,nil,nil,nil,Configuration::LATEST)
     end
 
     def initialize(pack)
       super(pack)
       hbox = Gtk2AppLib::Widgets::HBox.new(self)
 
-      HOOKS[:invert_sort] = invert_sort = Gtk2AppLib::Widgets::CheckButton.new('Invert Sort', hbox, Configuration::INVERT_SORT_OPTIONS)
-      Gtk2AppLib::Widgets::CheckButton.new('Lock', hbox, Configuration::LOCK_OPTIONS,'toggled'){|checkbox,*emits| HOOKS[:results_pane].lock(checkbox.active?) }
+      HOOKS[:INVERT_SORT] = invert_sort = Gtk2AppLib::Widgets::CheckButton.new(*Configuration::INVERT+[hbox])
+      Gtk2AppLib::Widgets::CheckButton.new(*Configuration::LOCK+[hbox]){|checkbox,*emits| HOOKS[:RESULTS_PANE].lock(checkbox.active?) }
 
       hbox = Gtk2AppLib::Widgets::HBox.new(self)
 
-      Gtk2AppLib::Widgets::Button.new('New Entry', hbox,'clicked'){ ControlPane.new_entry_button_clicked }
-      Gtk2AppLib::Widgets::Button.new('Today', hbox,'clicked'){ ControlPane.today_button_clicked }
-      Gtk2AppLib::Widgets::Button.new("Last #{Configuration::LATEST} Entries", hbox,'clicked'){ ControlPane.latest_button_clicked }
+      Gtk2AppLib::Widgets::Button.new(*Configuration::NEW_ENTRY+[hbox]){ ControlPane.new_entry_button_clicked }
+      Gtk2AppLib::Widgets::Button.new(*Configuration::TODAY+[hbox]){ ControlPane.today_button_clicked }
+      Gtk2AppLib::Widgets::Button.new(*Configuration::LATEST_ENTRIES+[hbox]){ ControlPane.latest_button_clicked }
 
-      HOOKS[:calendar] = Calendar.new(self)
+      HOOKS[:CALENDAR] = Calendar.new(self)
       time_frame = TimeFrame.new(self)
-      HOOKS[:keyword_search_form] = KeywordSearchForm.new( self, time_frame )
-      HOOKS[:labels_cloud] = LabelsCloud.new( self, time_frame )
+      HOOKS[:KEYWORD_SEARCH_FORM] = KeywordSearchForm.new( self, time_frame )
+      HOOKS[:LABELS_CLOUD] = LabelsCloud.new( self, time_frame )
     end
   end
 end
