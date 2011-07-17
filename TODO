@@ -1,0 +1,27 @@
+
+TODO
+
+
+NICE TO HAVE
+
+	Restore button does not restore sort number.
+		Not easy, file is moved immediately on change (focus out).
+		There might be a problem if the widget can change without focus?
+
+DONE
+
+	Should default and be able to show latest entries
+	'comments' in about not used... delete.
+	Code review/reduction... hooks over done?
+	bug with bold dates sometimes...
+	Put a configurable limit to the number of results.
+	Verify that starts out on lock mode when so configured
+	Keyword search included tags
+		Have searches combine with eachother.
+	Add a restore option... the *.bak file.
+	This diary need to have the left panel be a little wider.
+	Window starts out to small.
+	Make the search start at "Search All Time", but
+	then have it remember where it was last set to.
+	Diary is fast enough that "Dock" is not needed.
+
